@@ -274,7 +274,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     # 限值缝隙行数以加快测试速度（实际分析请移除次限制）
     num_columns = df.shape[1]
     # num_rows = df.shape[0]
-    num_rows = 16 # 限制行数为16000行，便于测试
+    num_rows = 160 # 限制行数为16000行，便于测试
     MyTime = MyTime[:num_rows]
 
     # 删除可能存在的旧荷载模式和时程函数
@@ -527,6 +527,8 @@ def get_node_displacement_history(model, node_name, load_case="Wind_time_history
         # 汇总位移结果
         displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
         time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
+        print(f"displacement_results的尺寸为: {len(displacement_results)}")
+        print(f"time_points的尺寸为: {len(time_points)}")
 
         # 如果指定了输出文件，保存结果到CSV
         if output_file:
@@ -535,11 +537,12 @@ def get_node_displacement_history(model, node_name, load_case="Wind_time_history
                 import os
                 
                 # 创建带时间戳的文件名
-                output_file_with_timestamp = create_unique_filename(os.path.splitext(output_file)[0],".csv",timestamp)
+                timestamp = get_timestamp()
+                output_file_with_timestamp = create_unique_filename(output_file, "", timestamp)
 
                 # 创建DataFrame
                 df = pd.DataFrame({
-                    "time":time_points,
+                    # "time":time_points,
                     "UX": ux_list,
                     "UY": uy_list,
                     "UZ": uz_list,
@@ -547,15 +550,15 @@ def get_node_displacement_history(model, node_name, load_case="Wind_time_history
                     "RY": ry_list,
                     "RZ": rz_list
                 })
-                
+
                 # 确保输出目录存在
-                output_dir = os.path.dirname(output_file)
+                output_dir = os.path.dirname(output_file_with_timestamp)
                 if output_dir and not os.path.exists(output_dir):
                     os.makedirs(output_dir)
-                    
+
                 # 保存到CSV文件
-                df.to_csv(output_file, index=False)
-                print(f"位移响应时程已保存至: {output_file}")
+                df.to_csv(output_file_with_timestamp, index=False)
+                print(f"位移响应时程已保存至: {output_file_with_timestamp}")
                 
                 # 输出简单统计信息
                 print("\n位移响应统计:")
@@ -579,8 +582,8 @@ def create_unique_filename(base_path, extension="", timestamp=None):
     创建带时间戳的唯一文件名
     
     参数:
-        base_path: 基础文件路径（不含扩展名）
-        extension: 文件扩展名（如 ".csv", ".png"）
+        base_path: 基础文件路径（可能包含扩展名）
+        extension: 文件扩展名（如 ".csv", ".png"），如果base_path已包含扩展名则可以为空
         timestamp: 时间戳，如果为None则使用当前时间
     
     返回:
@@ -589,12 +592,19 @@ def create_unique_filename(base_path, extension="", timestamp=None):
     if timestamp is None:
         timestamp = get_timestamp()
     
-    # 分离目录和文件名
+    # 分离目录、文件名和扩展名
     directory = os.path.dirname(base_path)
     filename = os.path.basename(base_path)
     
-    # 创建带时间戳的文件名
-    timestamped_filename = f"{filename}_{timestamp}{extension}"
+    # 如果base_path包含扩展名，分离出来
+    if '.' in filename and not extension:
+        name_part, ext_part = os.path.splitext(filename)
+        extension = ext_part
+    else:
+        name_part = filename
+    
+    # 创建带时间戳的文件名：文件名_时间戳.扩展名
+    timestamped_filename = f"{name_part}_{timestamp}{extension}"
     
     return os.path.join(directory, timestamped_filename)
 
@@ -636,7 +646,8 @@ def main():
 
     # 添加风荷载时程曲线
     # 使用自定义风荷载时程文件
-    wind_file_path = "D:\\MyFiles\\SAP2000\\code\\WindloadTimes\\Model2_10yr_000.csv"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_000.csv")
     wind_load_count, diaphragm_centers = add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=wind_file_path)
     if wind_load_count > 0:
         print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
@@ -665,7 +676,10 @@ def main():
         print(f"\n分析中心点 {target_node} 的位移响应...")
         
         # 输出文件路径
-        output_path = "D:\\MyFiles\\SAP2000\\results\\node_displacement.csv"
+        results_dir = os.path.join(script_dir, "output/20250704") # 确保结果目录存在
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
+        output_path = os.path.join(results_dir, "node_displacement.csv")
         
         # 获取位移响应时程
         times, displacements = get_node_displacement_history(
@@ -684,7 +698,7 @@ def main():
         top_floor = sorted(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))[-1]
         top_node = diaphragm_centers[top_floor]["point_name"]
         
-        top_output_path = "D:\\MyFiles\\SAP2000\\results\\top_node_displacement.csv"
+        top_output_path = os.path.join(results_dir, "top_node_displacement.csv")
         
         print(f"\n分析顶层中心点 {top_node} 的位移响应...")
         top_times, top_displacements = get_node_displacement_history(
