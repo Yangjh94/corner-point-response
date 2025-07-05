@@ -450,7 +450,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
 
     return col_idx, diaphragm_centers
         
-def get_node_displacement_history(model, node_name, load_case="Wind_time_history", output_file=None, timestamp=None):
+def get_node_response_history(model, node_name, load_case="Wind_time_history", output_file=None, timestamp=None):
     """
     获取指定节点在指定荷载工况下的位移响应时程
     
@@ -523,52 +523,100 @@ def get_node_displacement_history(model, node_name, load_case="Wind_time_history
         ry_list = R2  # Y方向旋转
         rz_list = R3  # Z方向旋转
 
+        # 创建位移DataFrame
+        df_disp = pd.DataFrame({
+            # "time":time_points,
+            "UX": U1,
+            "UY": U2,
+            "UZ": U3,
+            "RX": R1,
+            "RY": R2,
+            "RZ": R3
+        })
+
+        # 输出简单统计信息
+        print("\n位移响应统计:")
+        print(f"X方向最大位移: {max(ux_list, key=abs):.6f} mm")
+        print(f"Y方向最大位移: {max(uy_list, key=abs):.6f} mm")
+        print(f"Z方向最大位移: {max(uz_list, key=abs):.6f} mm")
+        
         # 汇总位移结果
         displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
         time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
         print(f"displacement_results的尺寸为: {len(displacement_results)}")
         print(f"time_points的尺寸为: {len(time_points)}")
 
+        # 获取节点加速度
+        GroupElm = 0
+        NumberResults = 0
+        Obj = []
+        Elm = []
+        LoadCase = [load_case]
+        StepType = ["Time"]
+        StepNum = []
+        U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
+        
+        [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = \
+        model.Results.JointAcc(
+            node_name, 
+            GroupElm, 
+            NumberResults, 
+            Obj, 
+            Elm, 
+            LoadCase, 
+            StepType, 
+            StepNum,
+            U1, U2, U3, R1, R2, R3 
+        )
+        
+        ux_list = U1  # X方向加速度
+        uy_list = U2  # Y方向加速度
+        uz_list = U3  # Z方向加速度
+        rx_list = R1  # X方向加速度
+        ry_list = R2  # Y方向加速度
+        rz_list = R3  # Z方向加速度
+
+        # 创建加速度DataFrame
+        df_acc = pd.DataFrame({
+            # "time":time_points,
+            "UX": ux_list,
+            "UY": uy_list,
+            "UZ": uz_list,
+            "RX": rx_list,
+            "RY": ry_list,
+            "RZ": rz_list
+        })
+        
+        # 输出简单统计信息
+        print("\n加速度响应统计:")
+        print(f"X方向最大加速度: {max(ux_list, key=abs):.6f} mm")
+        print(f"Y方向最大加速度: {max(uy_list, key=abs):.6f} mm")
+        print(f"Z方向最大加速度: {max(uz_list, key=abs):.6f} mm")
+
+        # 汇总加速度结果
+        acceleration_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
+        print(f"acceleration_results的尺寸为: {len(acceleration_results)}")
+
         # 如果指定了输出文件，保存结果到CSV
         if output_file:
-            try:
-                # import pandas as pd
-                # import os
-                
-                # 创建带时间戳的文件名
-                timestamp = get_timestamp()
-                output_file_with_timestamp = create_unique_filename(output_file, "", timestamp)
+            # 创建带时间戳的文件名
+            timestamp = get_timestamp()
+            output_disp_file_with_timestamp = create_unique_filename(output_file, "disp", timestamp)
+            output_acce_file_with_timestamp = create_unique_filename(output_file, "acce", timestamp)
 
-                # 创建DataFrame
-                df = pd.DataFrame({
-                    # "time":time_points,
-                    "UX": ux_list,
-                    "UY": uy_list,
-                    "UZ": uz_list,
-                    "RX": rx_list,
-                    "RY": ry_list,
-                    "RZ": rz_list
-                })
+            # 确保输出目录存在
+            output_dir = os.path.dirname(output_disp_file_with_timestamp) # 获取输出文件的目录
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
 
-                # 确保输出目录存在
-                output_dir = os.path.dirname(output_file_with_timestamp)
-                if output_dir and not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
+            # 保存到CSV文件
+            df_disp.to_csv(output_disp_file_with_timestamp, index=False)
+            print(f"位移响应时程已保存至: {output_disp_file_with_timestamp}")
 
-                # 保存到CSV文件
-                df.to_csv(output_file_with_timestamp, index=False)
-                print(f"位移响应时程已保存至: {output_file_with_timestamp}")
-                
-                # 输出简单统计信息
-                print("\n位移响应统计:")
-                print(f"X方向最大位移: {max(ux_list, key=abs):.6f} mm")
-                print(f"Y方向最大位移: {max(uy_list, key=abs):.6f} mm")
-                print(f"Z方向最大位移: {max(uz_list, key=abs):.6f} mm")
-                
-            except Exception as e:
-                print(f"保存CSV文件时出错: {e}")
+            df_acc.to_csv(output_acce_file_with_timestamp, index=False)
+            print(f"加速度响应时程已保存至: {output_acce_file_with_timestamp}")
 
-        return time_points, displacement_results
+        return time_points, displacement_results, acceleration_results
         
     except Exception as e:
         print(f"获取节点位移响应时程时出错: {e}")
@@ -576,13 +624,12 @@ def get_node_displacement_history(model, node_name, load_case="Wind_time_history
         traceback.print_exc()
         return None, None
 
-def create_unique_filename(base_path, extension="", timestamp=None):
+def create_unique_filename(base_path, type, timestamp=None):
     """
     创建带时间戳的唯一文件名
     
     参数:
         base_path: 基础文件路径（可能包含扩展名）
-        extension: 文件扩展名（如 ".csv", ".png"），如果base_path已包含扩展名则可以为空
         timestamp: 时间戳，如果为None则使用当前时间
     
     返回:
@@ -592,19 +639,20 @@ def create_unique_filename(base_path, extension="", timestamp=None):
         timestamp = get_timestamp()
     
     # 分离目录、文件名和扩展名
-    directory = os.path.dirname(base_path)
-    filename = os.path.basename(base_path)
+    directory = os.path.dirname(base_path) # 获取目录部分，如果没有目录则为当前目录
+    filename = os.path.basename(base_path) # 获取文件名部分，不包含目录
     
     # 如果base_path包含扩展名，分离出来
-    if '.' in filename and not extension:
+    if '.' in filename:
         name_part, ext_part = os.path.splitext(filename)
-        extension = ext_part
+        # extension = ext_part
     else:
         name_part = filename
-    
-    # 创建带时间戳的文件名：文件名_时间戳.扩展名
-    timestamped_filename = f"{name_part}_{timestamp}{extension}"
-    
+
+    # 创建带时间戳的文件名：文件名_时间戳
+    # timestamped_filename = f"{timestamp}_{name_part}_{type}{ext_part}"
+    timestamped_filename = f"{timestamp}_{name_part}_{type}{ext_part}"
+
     return os.path.join(directory, timestamped_filename)
 
 def main():
@@ -667,7 +715,6 @@ def main():
 
 
     # [5] 获取节点位移响应时程
-    # center_nodes = []  # 收集所有风荷载中心点
     # 获取最高楼层的隔板名称
     top_diaphragm_center_name = max(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))
     print(f"最高楼层的隔板名称: {top_diaphragm_center_name}")
@@ -686,10 +733,10 @@ def main():
     for target_node in target_nodes:
         print(f"\n获取节点 {target_node} 的位移和加速度响应...")
 
-        output_path = os.path.join(results_dir, f"{target_node}_displacement.csv")
+        output_path = os.path.join(results_dir, f"{target_node}.csv")
 
         # 获取位移响应时程
-        times, displacements = get_node_displacement_history(
+        times, displacements, accelerations = get_node_response_history(
             model,
             target_node,
             load_case="Wind_time_history", 
