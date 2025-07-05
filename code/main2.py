@@ -760,9 +760,9 @@ def main():
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
     #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
     #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv"]
-    wind_file = ["Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
-                 "Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv"]  # 测试时可以只使用一个文件
-    
+    wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
+                 "Model2_10yr_015.csv", "Model2_10yr_020.csv"]  # 测试时可以只使用一个文件
+
     # 初始化结果存储列表
     all_results = []
     
@@ -772,7 +772,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=16000)
+                                                                        num_rows=33000)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
@@ -781,7 +781,7 @@ def main():
         # [4] 运行分析
         print("开启多线程求解器...")
         ret = model.Analyze.SetSolverOption_1(2,0,True)
-        print("正在运行分析...")
+        print(f"正在运行分析工况{wind_file_name}")
         ret = model.Analyze.RunAnalysis()
         if ret == 0:
             print("分析已成功完成")
