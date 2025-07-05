@@ -273,7 +273,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     # 限值缝隙行数以加快测试速度（实际分析请移除次限制）
     num_columns = df.shape[1]
     # num_rows = df.shape[0]
-    num_rows = 16 # 限制行数为16行，便于测试
+    num_rows = 16 # 限制行数为16000行，便于测试
     MyTime = MyTime[:num_rows]
 
     # 删除可能存在的旧荷载模式和时程函数
@@ -543,7 +543,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         # 汇总位移结果
         displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
         time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
-        print(f"displacement_results的尺寸为: {len(displacement_results)}")
+        print(f"displacement_results的尺寸为: {len(displacement_results[0])}")
         print(f"time_points的尺寸为: {len(time_points)}")
 
         # 获取节点加速度
@@ -595,7 +595,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
 
         # 汇总加速度结果
         acceleration_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
-        print(f"acceleration_results的尺寸为: {len(acceleration_results)}")
+        print(f"acceleration_results的尺寸为: {len(acceleration_results[0])}")
 
         # 如果指定了输出文件，保存结果到CSV
         if output_file:
@@ -696,7 +696,7 @@ def main():
 
     # 添加风荷载时程曲线，使用自定义风荷载时程文件
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
-    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_015.csv")
+    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_020.csv")
     wind_load_count, diaphragm_centers = add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=wind_file_path)
     if wind_load_count > 0:
         print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
