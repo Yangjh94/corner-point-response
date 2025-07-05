@@ -543,7 +543,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         # 汇总位移结果
         displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
         time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
-        print(f"displacement_results的尺寸为: {len(displacement_results[0])}")
+        print(f"displacement_results的尺寸为: {len(displacement_results)}")
         print(f"time_points的尺寸为: {len(time_points)}")
 
         # 获取节点加速度
@@ -595,7 +595,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
 
         # 汇总加速度结果
         acceleration_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
-        print(f"acceleration_results的尺寸为: {len(acceleration_results[0])}")
+        print(f"acceleration_results的尺寸为: {len(acceleration_results)}")
 
         # 如果指定了输出文件，保存结果到CSV
         if output_file:
@@ -740,12 +740,27 @@ def main():
 
     # 添加风荷载时程曲线，使用自定义风荷载时程文件
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
-    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_000.csv")
-    wind_load_count, diaphragm_centers = add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=wind_file_path)
-    if wind_load_count > 0:
-        print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
-    else:
-        print("添加风荷载时程曲线失败")
+
+    # 指定风荷载时程数据文件路径，然后循环运行程序
+    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
+    #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
+    #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv"]
+    wind_file = ["Model2_10yr_000.csv","Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
+    
+    # 初始化结果存储列表
+    all_results = []
+    
+    for wind_file_name in wind_file:
+        wind_file_path = os.path.join(script_dir, "WindloadTimes", wind_file_name)
+        wind_load_count, diaphragm_centers = add_wind_time_history_load(model, 
+                                                                        diaphragm_constraints, 
+                                                                        node_z_coords, 
+                                                                        wind_time_history_file=wind_file_path, 
+                                                                        num_rows=16)
+        if wind_load_count > 0:
+            print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
+        else:
+            print("添加风荷载时程曲线失败")
         
         # [4] 运行分析
         print("开启多线程求解器...")
