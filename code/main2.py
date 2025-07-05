@@ -648,7 +648,7 @@ def main():
 
     # 添加风荷载时程曲线，使用自定义风荷载时程文件
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
-    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_000.csv")
+    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_015.csv")
     wind_load_count, diaphragm_centers = add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=wind_file_path)
     if wind_load_count > 0:
         print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
