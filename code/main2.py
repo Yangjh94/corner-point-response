@@ -269,11 +269,11 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     MyTime  = [i/fs for i in range(0, len(df))]
     print(f"时程数据共有 {len(df)} 行，采样频率 {fs}Hz")
     print(f"时间序列前5个值: {MyTime[:5]}")
-
+    
     # 限值缝隙行数以加快测试速度（实际分析请移除次限制）
     num_columns = df.shape[1]
     # num_rows = df.shape[0]
-    num_rows = 16000 # 限制行数为16000行，便于测试
+    num_rows = 16 # 限制行数为16行，便于测试
     MyTime = MyTime[:num_rows]
 
     # 删除可能存在的旧荷载模式和时程函数
@@ -532,8 +532,8 @@ def get_node_displacement_history(model, node_name, load_case="Wind_time_history
         # 如果指定了输出文件，保存结果到CSV
         if output_file:
             try:
-                import pandas as pd
-                import os
+                # import pandas as pd
+                # import os
                 
                 # 创建带时间戳的文件名
                 timestamp = get_timestamp()
@@ -567,7 +567,7 @@ def get_node_displacement_history(model, node_name, load_case="Wind_time_history
                 
             except Exception as e:
                 print(f"保存CSV文件时出错: {e}")
-                
+
         return time_points, displacement_results
         
     except Exception as e:
@@ -608,13 +608,17 @@ def create_unique_filename(base_path, extension="", timestamp=None):
     return os.path.join(directory, timestamped_filename)
 
 def main():
+    # 记录程序开始时间
+    start_time = time.time() # 记录开始时间
+    start_datetime = datetime.now() # 获取当前时间
+    
     print("=" * 80)
     print("SAP2000模型连接程序")
+    print(f"程序开始时间: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 80)
     
     # 连接到当前打开的SAP2000实例
     model = connect_to_sap2000()
-    print(model)
     if model is None:
         print("无法连接到SAP2000，程序终止")
         return
@@ -625,11 +629,10 @@ def main():
         model.SetModelIsLocked(False)
         print("模型已解锁")
     else:
-        # model.SetModelIsLocked(True)
         print("模型未锁定")
 
     # 创建刚性隔板
-    print("开始创建刚性隔板...")
+    print("\n[步骤2] 创建刚性隔板...")
     # 指定要创建刚性隔板的楼层标高列表
     target_elevations = [6000, 10500, 15000, 19500, 23100, 26700, 30300, 33900, 37500, 41100, 44700, 48300, 51900, 55500, 
                          59100, 62700, 66300, 69900, 73500, 77100, 80700, 84300, 87900, 91500, 95100, 98700, 102300, 
@@ -643,10 +646,9 @@ def main():
     else:
         print("创建刚性隔板失败")
 
-    # 添加风荷载时程曲线
-    # 使用自定义风荷载时程文件
+    # 添加风荷载时程曲线，使用自定义风荷载时程文件
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
-    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_010.csv")
+    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_000.csv")
     wind_load_count, diaphragm_centers = add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=wind_file_path)
     if wind_load_count > 0:
         print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
@@ -663,25 +665,28 @@ def main():
     else:
         print(f"分析失败，返回代码: {ret}")
 
-    # 获取节点位移响应时程
-    center_nodes = []  # 收集所有风荷载中心点
-    for constraint_name, info in diaphragm_centers.items():
-        center_nodes.append(info["point_name"])
-    
-    if center_nodes:
-        # 选择第一个中心点进行分析
-        target_node = "54000071"
-        print(f"\n分析中心点 {target_node} 的位移响应...")
-        
-        # 定义输出文件路径
-        # 在输出文件时包含 wind_file_path 中的文件名部分
-        wind_file_name = os.path.basename(wind_file_path)
-        wind_file_base_name = os.path.splitext(wind_file_name)[0]
 
-        results_dir = os.path.join(script_dir, f"output/{wind_file_base_name}") # 确保结果目录存在
-        if not os.path.exists(results_dir):
-            os.makedirs(results_dir)
-        output_path = os.path.join(results_dir, "corner_node_displacement.csv")
+    # [5] 获取节点位移响应时程
+    # center_nodes = []  # 收集所有风荷载中心点
+    # 获取最高楼层的隔板名称
+    top_diaphragm_center_name = max(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))
+    print(f"最高楼层的隔板名称: {top_diaphragm_center_name}")
+    node_top_center_name = diaphragm_centers[top_diaphragm_center_name]["point_name"]
+
+    target_nodes = [node_top_center_name, "54000062", "54000070", "54000071", "54000079"]  # 示例节点名称列表
+
+    # 在输出文件时包含 wind_file_path 中的文件名部分
+    wind_file_name = os.path.basename(wind_file_path)
+    wind_file_base_name = os.path.splitext(wind_file_name)[0]
+
+    results_dir = os.path.join(script_dir, "output",f"{wind_file_base_name}") # 确保结果目录存在
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+
+    for target_node in target_nodes:
+        print(f"\n获取节点 {target_node} 的位移和加速度响应...")
+
+        output_path = os.path.join(results_dir, f"{target_node}_displacement.csv")
 
         # 获取位移响应时程
         times, displacements = get_node_displacement_history(
@@ -690,31 +695,21 @@ def main():
             load_case="Wind_time_history", 
             output_file=output_path
         )
-        
         if times and displacements:
             print(f"成功获取顶层角点 {target_node} 的 {len(times)} 个时间步的位移数据")
         else:
             print("获取位移响应失败")
-            
-        # 获取最上层中心点的位移响应
-        top_floor = sorted(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))[-1]
-        top_node = diaphragm_centers[top_floor]["point_name"]
 
-        top_output_path = os.path.join(results_dir, "center_node_displacement.csv")
-
-        print(f"\n分析顶层中心点 {top_node} 的位移响应...")
-        top_times, top_displacements = get_node_displacement_history(
-            model,
-            top_node,
-            load_case="Wind_time_history", 
-            output_file=top_output_path
-        )
-        
-        if top_times and top_displacements:
-            print(f"成功获取顶层中心节点 {top_node} 的 {len(top_times)} 个时间步的位移数据")
-        else:
-            print("获取顶层中心节点位移响应失败")
-
+    
+    # 计算程序总耗时
+    end_time = time.time()
+    end_datetime = datetime.now()
+    total_time = end_time - start_time
+    
+    print("=" * 80)
+    print("程序执行完成")
+    print(f"程序结束时间: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"程序总耗时: {total_time:.2f} 秒 ({total_time/60:.2f} 分钟)")
     print("=" * 80)
 
 if __name__ == "__main__":
