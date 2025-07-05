@@ -535,6 +535,15 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         })
 
         # 输出简单统计信息
+        print(f"获取节点 {node_name} 的位移响应时程成功！")
+        print(f"当前荷载工况为: {load_case}")
+        print(f"当前NumberResults为: {NumberResults}")
+        print(f"当前Obj为: {Obj}")
+        print(f"当前Elm为: {Elm}")
+        print(f"当前ACase为: {ACase}")
+        print(f"当前StepType为: {StepType}")
+        print(f"当前StepNum为: {StepNum}")
+
         print("\n位移响应统计:")
         print(f"X方向最大位移: {max(ux_list, key=abs):.6f} mm")
         print(f"Y方向最大位移: {max(uy_list, key=abs):.6f} mm")
@@ -745,7 +754,7 @@ def main():
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
     #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
     #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv"]
-    wind_file = ["Model2_10yr_000.csv","Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
+    wind_file = ["Model2_10yr_000.csv"]  # 测试时可以只使用一个文件
     
     # 初始化结果存储列表
     all_results = []
