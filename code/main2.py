@@ -516,6 +516,11 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
             U1, U2, U3, R1, R2, R3 
         )
         
+        if ret != 0:
+            print(f"获取节点加速度时程失败，错误码: {ret[-1]}")
+            print(f"返回的错误信息: {ret}")
+            print("请检查节点名称和荷载工况是否正确")
+
         ux_list = U1  # X方向位移
         uy_list = U2  # Y方向位移
         uz_list = U3  # Z方向位移
@@ -577,6 +582,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
             StepNum,
             U1, U2, U3, R1, R2, R3 
         )
+        
         
         ux_list = U1  # X方向加速度
         uy_list = U2  # Y方向加速度
