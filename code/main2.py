@@ -645,8 +645,8 @@ def main():
 
     # 添加风荷载时程曲线
     # 使用自定义风荷载时程文件
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_000.csv")
+    script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
+    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_010.csv")
     wind_load_count, diaphragm_centers = add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=wind_file_path)
     if wind_load_count > 0:
         print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
@@ -670,16 +670,19 @@ def main():
     
     if center_nodes:
         # 选择第一个中心点进行分析
-        # target_node = center_nodes[-1]
         target_node = "54000071"
         print(f"\n分析中心点 {target_node} 的位移响应...")
         
-        # 输出文件路径
-        results_dir = os.path.join(script_dir, "output/20250704") # 确保结果目录存在
+        # 定义输出文件路径
+        # 在输出文件时包含 wind_file_path 中的文件名部分
+        wind_file_name = os.path.basename(wind_file_path)
+        wind_file_base_name = os.path.splitext(wind_file_name)[0]
+
+        results_dir = os.path.join(script_dir, f"output/{wind_file_base_name}") # 确保结果目录存在
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
-        output_path = os.path.join(results_dir, "node_displacement.csv")
-        
+        output_path = os.path.join(results_dir, "corner_node_displacement.csv")
+
         # 获取位移响应时程
         times, displacements = get_node_displacement_history(
             model,
@@ -689,16 +692,16 @@ def main():
         )
         
         if times and displacements:
-            print(f"成功获取 {len(times)} 个时间步的位移数据")
+            print(f"成功获取顶层角点 {target_node} 的 {len(times)} 个时间步的位移数据")
         else:
             print("获取位移响应失败")
             
         # 获取最上层中心点的位移响应
         top_floor = sorted(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))[-1]
         top_node = diaphragm_centers[top_floor]["point_name"]
-        
-        top_output_path = os.path.join(results_dir, "top_node_displacement.csv")
-        
+
+        top_output_path = os.path.join(results_dir, "center_node_displacement.csv")
+
         print(f"\n分析顶层中心点 {top_node} 的位移响应...")
         top_times, top_displacements = get_node_displacement_history(
             model,
@@ -708,7 +711,10 @@ def main():
         )
         
         if top_times and top_displacements:
-            print(f"成功获取顶层节点 {top_node} 的 {len(top_times)} 个时间步的位移数据")
+            print(f"成功获取顶层中心节点 {top_node} 的 {len(top_times)} 个时间步的位移数据")
+        else:
+            print("获取顶层中心节点位移响应失败")
+
     print("=" * 80)
 
 if __name__ == "__main__":
