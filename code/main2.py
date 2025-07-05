@@ -191,7 +191,7 @@ def add_diaphragms(model, target_elevations=None, tolerance=0.01):
         traceback.print_exc()
         return []
 
-def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=None):
+def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=None,num_rows=None):
     """
     在每个刚性隔板的中心点添加风荷载时程曲线
     
@@ -272,8 +272,8 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     
     # 限值缝隙行数以加快测试速度（实际分析请移除次限制）
     num_columns = df.shape[1]
-    # num_rows = df.shape[0]
-    num_rows = 16 # 限制行数为16000行，便于测试
+    if num_rows is None or num_rows > df.shape[0]:
+        num_rows = df.shape[0]
     MyTime = MyTime[:num_rows]
 
     # 删除可能存在的旧荷载模式和时程函数
@@ -655,11 +655,55 @@ def create_unique_filename(base_path, type, timestamp=None):
 
     return os.path.join(directory, timestamped_filename)
 
+def summarize_results(all_results):
+    """
+    根据 all_results 统计 wind_file 的种类，并输出表格
+    
+    参数:
+        all_results: 包含所有节点响应结果的列表
+    
+    返回:
+        pandas.DataFrame 表格，包含 wind_file 的统计信息
+    """
+    import pandas as pd
+
+    # 提取 wind_file 和节点信息
+    summary_data = []
+    for result in all_results:
+        summary_data.append({
+            "wind_file": result["wind_file"],
+            "node": result["node"],
+            "time_steps": len(result["times"]),
+            "max_displacement": max(max(map(abs, result["displacements"][0]), default=0),  # X方向最大位移
+                                    max(map(abs, result["displacements"][1]), default=0),  # Y方向最大位移
+                                    max(map(abs, result["displacements"][2]), default=0)), # Z方向最大位移
+            "max_acceleration": max(max(map(abs, result["accelerations"][0]), default=0),  # X方向最大加速度
+                                    max(map(abs, result["accelerations"][1]), default=0),  # Y方向最大加速度
+                                    max(map(abs, result["accelerations"][2]), default=0))  # Z方向最大加速度
+        })
+
+    # 转换为 DataFrame
+    df_summary = pd.DataFrame(summary_data)
+
+    # 按 wind_file 分组统计
+    grouped_summary = df_summary.groupby("wind_file").agg({
+        "node": "count",  # 节点数量
+        "time_steps": "sum",  # 总时间步数
+        "max_displacement": "max",  # 最大位移
+        "max_acceleration": "max"  # 最大加速度
+    }).reset_index()
+
+    # 输出表格
+    print("\n统计结果表格:")
+    print(grouped_summary)
+
+    return grouped_summary
+
 def main():
     # 记录程序开始时间
     start_time = time.time() # 记录开始时间
     start_datetime = datetime.now() # 获取当前时间
-    
+  
     print("=" * 80)
     print("SAP2000模型连接程序")
     print(f"程序开始时间: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -696,58 +740,70 @@ def main():
 
     # 添加风荷载时程曲线，使用自定义风荷载时程文件
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
-    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_020.csv")
+    wind_file_path = os.path.join(script_dir, "WindloadTimes", "Model2_10yr_000.csv")
     wind_load_count, diaphragm_centers = add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=wind_file_path)
     if wind_load_count > 0:
         print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
     else:
         print("添加风荷载时程曲线失败")
         
-    # [4] 运行分析
-    print("开启多线程求解器...")
-    ret = model.Analyze.SetSolverOption_1(2,0,True)
-    print("正在运行分析...")
-    ret = model.Analyze.RunAnalysis()
-    if ret == 0:
-        print("分析已成功完成")
-    else:
-        print(f"分析失败，返回代码: {ret}")
-
-
-    # [5] 获取节点位移响应时程
-    # 获取最高楼层的隔板名称
-    top_diaphragm_center_name = max(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))
-    print(f"最高楼层的隔板名称: {top_diaphragm_center_name}")
-    node_top_center_name = diaphragm_centers[top_diaphragm_center_name]["point_name"]
-
-    target_nodes = [node_top_center_name, "54000062", "54000070", "54000071", "54000079"]  # 示例节点名称列表
-
-    # 在输出文件时包含 wind_file_path 中的文件名部分
-    wind_file_name = os.path.basename(wind_file_path)
-    wind_file_base_name = os.path.splitext(wind_file_name)[0]
-
-    results_dir = os.path.join(script_dir, "output",f"{wind_file_base_name}") # 确保结果目录存在
-    if not os.path.exists(results_dir):
-        os.makedirs(results_dir)
-
-    for target_node in target_nodes:
-        print(f"\n获取节点 {target_node} 的位移和加速度响应...")
-
-        output_path = os.path.join(results_dir, f"{target_node}.csv")
-
-        # 获取位移响应时程
-        times, displacements, accelerations = get_node_response_history(
-            model,
-            target_node,
-            load_case="Wind_time_history", 
-            output_file=output_path
-        )
-        if times and displacements:
-            print(f"成功获取顶层角点 {target_node} 的 {len(times)} 个时间步的位移数据")
+        # [4] 运行分析
+        print("开启多线程求解器...")
+        ret = model.Analyze.SetSolverOption_1(2,0,True)
+        print("正在运行分析...")
+        ret = model.Analyze.RunAnalysis()
+        if ret == 0:
+            print("分析已成功完成")
         else:
-            print("获取位移响应失败")
+            print(f"分析失败，返回代码: {ret}")
 
+        # [5] 获取节点位移响应时程
+        # 获取最高楼层的隔板名称
+        top_diaphragm_center_name = max(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))
+        print(f"最高楼层的隔板名称: {top_diaphragm_center_name}")
+        node_top_center_name = diaphragm_centers[top_diaphragm_center_name]["point_name"]
+
+        target_nodes = [node_top_center_name, "54000062", "54000070", "54000071", "54000079"]  # 示例节点名称列表
+
+        # 在输出文件时包含 wind_file_path 中的文件名部分
+        wind_file_name = os.path.basename(wind_file_path)
+        wind_file_base_name = os.path.splitext(wind_file_name)[0]
+
+        results_dir = os.path.join(script_dir, "output",f"{wind_file_base_name}") # 确保结果目录存在
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
+
+        
+        for target_node in target_nodes:
+            print(f"\n获取节点 {target_node} 的位移和加速度响应...")
+
+            output_path = os.path.join(results_dir, f"{target_node}.csv")
+
+            # 获取位移响应时程
+            times, displacements, accelerations = get_node_response_history(
+                model,
+                target_node,
+                load_case="Wind_time_history", 
+                output_file=output_path
+            )
+            if times and displacements and accelerations:
+                print(f"成功获取顶层角点 {target_node} 的 {len(times)} 个时间步的位移数据")
+            else:
+                print("获取位移响应失败")
+
+            # 可以在此处将本次计算得到的加速度和位移结果保存到一个变量中，方便后续可视化展示
+            all_results.append({
+                "wind_file": wind_file_name,
+                "node": target_node,
+                "times": times,
+                "displacements": displacements,
+                "accelerations": accelerations
+            })
     
+    # [6] 结果统计分析
+    summary_table = summarize_results(all_results)
+
+
     # 计算程序总耗时
     end_time = time.time()
     end_datetime = datetime.now()
@@ -755,6 +811,7 @@ def main():
     
     print("=" * 80)
     print("程序执行完成")
+    print(f"共运行了{len(wind_file)}个风荷载时程文件，分别为: {wind_file}")
     print(f"程序结束时间: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"程序总耗时: {total_time:.2f} 秒 ({total_time/60:.2f} 分钟)")
     print("=" * 80)
