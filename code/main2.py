@@ -415,7 +415,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
         angles.append(0.0)
 
         # 将工况添加到响应组合
-        ret = model.RespCombo.SetCaseList("Combo2", 0, LoadPatternName, 1)
+        # ret = model.RespCombo.SetCaseList("Combo2", 0, LoadPatternName, 1)
         col_idx += 1
 
     # 步骤7：将所有荷载关联到统一时程工况
@@ -515,7 +515,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
             StepNum,
             U1, U2, U3, R1, R2, R3 
         )
-        
+
         if ret != 0:
             print(f"获取节点加速度时程失败，错误码: {ret[-1]}")
             print(f"返回的错误信息: {ret}")
@@ -760,7 +760,7 @@ def main():
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
     #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
     #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv"]
-    wind_file = ["Model2_10yr_000.csv"]  # 测试时可以只使用一个文件
+    wind_file = ["Model2_10yr_025.csv"]  # 测试时可以只使用一个文件
     
     # 初始化结果存储列表
     all_results = []
@@ -771,7 +771,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=16)
+                                                                        num_rows=16000)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
