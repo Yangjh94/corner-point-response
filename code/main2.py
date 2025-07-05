@@ -543,7 +543,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         # 汇总位移结果
         displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
         time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
-        print(f"displacement_results的尺寸为: {len(displacement_results)}")
+        print(f"displacement_results的尺寸为: {len(displacement_results[0])}")
         print(f"time_points的尺寸为: {len(time_points)}")
 
         # 获取节点加速度
@@ -595,7 +595,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
 
         # 汇总加速度结果
         acceleration_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
-        print(f"acceleration_results的尺寸为: {len(acceleration_results)}")
+        print(f"acceleration_results的尺寸为: {len(acceleration_results[0])}")
 
         # 如果指定了输出文件，保存结果到CSV
         if output_file:
@@ -817,7 +817,6 @@ def main():
     
     # [6] 结果统计分析
     summary_table = summarize_results(all_results)
-
 
     # 计算程序总耗时
     end_time = time.time()
