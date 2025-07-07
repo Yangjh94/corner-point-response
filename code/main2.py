@@ -831,7 +831,7 @@ def main():
             })
     
     # [6] 结果统计分析
-    summary_table = summarize_results(all_results)
+    # summary_table = summarize_results(all_results)
 
     # 计算程序总耗时
     end_time = time.time()
