@@ -277,40 +277,31 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     MyTime = MyTime[:num_rows]
 
     # 删除可能存在的旧荷载模式和时程函数
-    try:
-        # 删除旧的荷载模式
-        existing_patterns = []
-        try:
-            _, existing_patterns = model.LoadPatterns.GetNameList()
-        except:
-            pass
-            
-        for pattern in existing_patterns:
-            if pattern.startswith("Wind_"):
-                try:
-                    model.LoadPatterns.Delete(pattern)
-                    print(f"已删除荷载模式: {pattern}")
-                except:
-                    pass
+    # 删除旧的荷载模式
+    existing_patterns = []
+    ret = model.LoadPatterns.GetNameList()
+    existing_patterns = ret[1]
         
-        # 删除旧的时程工况
-        try:
-            model.LoadCases.Delete("WIND_TIME_HISTORY")
-            print("已删除旧的时程工况")
-        except:
-            pass
-            
-        # 删除旧的时程函数
-        try:
-            _, func_names = model.Func.GetNameList()
-            for func in func_names:
-                if func.startswith("WIND_"):
-                    model.Func.Delete(func)
-            print("已删除旧的时程函数")
-        except:
-            pass
-    except Exception as e:
-        print(f"清理旧数据时出错: {e}")
+    for pattern in existing_patterns:
+        if pattern.startswith("Wind_"):
+            print(pattern)
+            ret = model.LoadPatterns.Delete(pattern) # 无法删除荷载模式是什么原因
+            if ret != 0:
+                print(f"删除荷载模式 {pattern} 失败，错误码: {ret}")
+            else:
+                print(f"已删除荷载模式: {pattern}")
+
+    # 删除旧的时程函数
+    func_names = []
+    ret = model.Func.GetNameList()
+    func_names = ret[1]
+    for func in func_names:
+        if func.startswith("Wind_"):
+            ret = model.Func.Delete(func)
+            if ret != 0:
+                print(f"删除时程函数 {func} 失败，错误码: {ret}")
+            else:
+                print(f"已删除时程函数: {func}")
 
     # 创建模态分析工况
     print("创建模态分析工况...")
@@ -352,7 +343,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     col_idx = 0
     # 创建响应组合
     ret = model.RespCombo.Delete("Combo2")
-    ret = model.RespCombo.Add("Combo2", 0)
+    # ret = model.RespCombo.Add("Combo2", 0)
     for constraint_name, center_info in diaphragm_centers.items():
         point_name = center_info["point_name"]
         
@@ -519,13 +510,13 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
     NumberResults = 0
     Obj = []
     Elm = []
-    LoadCase = []  # 空列表，让函数填充
+    LoadCase = [load_case]  # 空列表，让函数填充
     StepType = []  # 空列表，让函数填充
     StepNum = []   # 空列表，让函数填充
     U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
 
     # 正确的调用方式，接收所有返回值
-    ret = model.Results.JointDisplAbs(
+    ret = model.Results.JointDispl(
         node_name, 
         GroupElm,  # 使用0表示按对象获取结果
         NumberResults, 
@@ -576,7 +567,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
     print(f"当前NumberResults为: {NumberResults}")
     print(f"当前Obj为: {Obj}")
     print(f"当前Elm为: {Elm}")
-    print(f"当前ACase为: {ACase}")
+    # print(f"当前ACase为: {ACase}")
     print(f"当前StepType为: {StepType}")
     print(f"当前StepNum为: {StepNum}")
 
@@ -829,7 +820,6 @@ def main():
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
-        
         for target_node in target_nodes:
             print(f"\n获取节点 {target_node} 的位移和加速度响应...")
 
