@@ -1,5 +1,5 @@
 """
-此程序用于连接到当前打开的SAP2000模型,读取风荷载时程数据，进行动力时程分析。
+此程序用于连接到当前打开的SAP2000模型,读取风荷载时程数据，使用模态法进行动力时程分析。
 """
 
 import os
@@ -221,6 +221,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
             # 获取节点坐标
             [x, y, z, _] = model.PointObj.GetCoordCartesian(point_name)
             constraint_points.append({"name": point_name, "x": x, "y": y, "z": z})
+
         if not constraint_points:
             print(f"警告：隔板 {constraint_name} 没有关联节点，跳过")
             continue
