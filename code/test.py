@@ -127,7 +127,7 @@ def add_diaphragms(model, target_elevations=None, tolerance=0.01):
     返回:
         成功创建的隔板名称列表，如果失败则返回空列表
     """
-    try:        
+    try:
         # 获取所有节点的Z坐标（即楼层标高）
         node_info = []  # 用于保存所有节点名称和坐标
         node_z_coords = defaultdict(list)
