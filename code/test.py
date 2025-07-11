@@ -820,16 +820,29 @@ def get_modal_results(model, num_modes=15, group_name="ALL"):
     
     return modal_periods, modal_freqs, df_shapes
 
+def get_node_coordinates(model):
+    """
+    获取SAP2000模型的所有节点坐标信息
+    返回：
+        node_coords: 节点坐标的字典，包含节点ID和对应的坐标（x, y, z）
+    """
+    node_coords = {}
+    # 获取所有节点的ID
+    node_ids = model.PointObj.GetAll()
+    for node_id in node_ids:
+        # 获取每个节点的坐标
+        x, y, z = model.PointObj.GetCoord(node_id)
+        node_coords[node_id] = (x, y, z)
+    return node_coords
+
 def main():
     # 连接到SAP2000
     SapModel = connect_to_sap2000()
     ret = SapModel.Analyze.SetRunCaseFlag("MODAL", True)
     ret = SapModel.Analyze.RunAnalysis()
+    # 获取模型的所有节点坐标信息
+    node_coords = get_node_coordinates(SapModel)
     modal_periods, modal_freqs, df_shapes= get_modal_results(SapModel, num_modes=15)
-    # if modal_periods is not None and modal_freqs is not None:
-    #     print("\n模态分析结果:")
-    #     for i in range(len(modal_periods)):
-    #         print(f"模态 {i+1}: 周期 = {modal_periods[i]:.4f} 秒, 频率 = {modal_freqs[i]:.4f} Hz")
 
 if __name__ == "__main__":
     main()
