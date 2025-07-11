@@ -861,28 +861,28 @@ def get_node_mass(model, node_names="ALL"):
         mass_info: 包含节点名称和对应质量的字典
     """
     mass_info = {}
+    # 获取所有节点的质量
+    m = [1, 1, 1, 1, 1, 1]  # 获取质量的参数，1表示获取所有质量分量
+
     if node_names == "ALL":
-        # 获取所有节点的质量
-        ret = model.PointObj.GetMass("ALL")
+        ret = model.PointObj.GetNameList()
         if ret[-1] != 0:
-            print(f"获取所有节点质量失败，错误代码: {ret[-1]}")
-            return mass_info
-        
-        number_points = ret[0]
-        point_names = ret[1]
-        masses = ret[2]
-        
-        for i in range(number_points):
-            mass_info[point_names[i]] = masses[i]
-    else:
-        # 获取单个节点的质量
-        ret = model.PointObj.GetMass(node_names)
-        if ret[-1] != 0:
-            print(f"获取节点 {node_names} 的质量失败，错误代码: {ret[-1]}")
+            print(f"获取所有节点名称失败，错误代码: {ret[-1]}")
             return mass_info
 
-        mass_info[node_names] = ret[0]
-    
+        # number_points = ret[0]
+        # print(f"模型中共有 {number_points} 个节点")
+        point_names = ret[1]
+
+        for point_name in point_names:
+            # 调用GetMass方法获取所有节点的质量
+            ret = model.PointObj.GetMass(point_name, m)
+            if ret[-1] != 0:
+                print(f"获取节点 {point_name} 的质量失败，错误代码: {ret[-1]}")
+                continue
+            masses = ret[0]
+            mass_info[point_name] = masses
+
     return mass_info
 
 def main():
@@ -900,11 +900,11 @@ def main():
 
     # 获取节点质量
     node_mass = get_node_mass(SapModel)
-    # 打印最后10个节点的质量信息
-    for point_name in list(node_mass.keys())[-10:]:
-        print(f"节点 {point_name}: 质量 = {node_mass[point_name]:.3f}")
+    # 打印最后20个节点的质量信息
+    for point_name in list(node_mass.keys())[-20:]:
+        print(f"节点 {point_name}: 质量 = {node_mass[point_name]}")
 
-    modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=15)
+    # modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=15)
 
 if __name__ == "__main__":
     main()
