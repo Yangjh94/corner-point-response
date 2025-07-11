@@ -899,10 +899,24 @@ def main():
     #     print(f"节点 {point_name}: 坐标 = ({x:.3f}, {y:.3f}, {z:.3f})")
 
     # 获取节点质量
-    node_mass = get_node_mass(SapModel)
+    node_masses = get_node_mass(SapModel)
     # 打印最后20个节点的质量信息
-    for point_name in list(node_mass.keys())[-20:]:
-        print(f"节点 {point_name}: 质量 = {node_mass[point_name]}")
+    for point_name in list(node_masses.keys()):
+        print(f"节点 {point_name}: 质量 = {node_masses[point_name]}")
+
+    # 将node_coords和node_masses中标高一直的节点质量进行求和
+    Floor_Masses = {}
+    for point_name, mass in list(node_masses.items())[2106:]:
+        # 获取节点坐标
+        z = round(node_coords[point_name][2], 0) # 保留0位小数
+        if z not in Floor_Masses:
+            Floor_Masses[z] = [0, 0, 0, 0, 0, 0]
+            Floor_Masses[z] = [x + y for x, y in zip(Floor_Masses[z], mass)]
+    
+    # 打印每层的质量信息
+    print("\n每层的质量信息:")
+    for z, mass in Floor_Masses.items():
+        print(f"层 {z}: 质量 = {mass}")
 
     # modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=15)
 
