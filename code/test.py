@@ -751,11 +751,12 @@ def get_modal_results(model, num_modes=15, group_name="ALL"):
 
     modal_periods = []
     modal_freqs = []
-    print(f"模态分析结果: 共 {len(Period)} 个模态")
-    for i in range(min(num_modes, len(Period))):
-        modal_periods.append(Period[i])
-        modal_freqs.append(Frequency[i])
-        print(f"模态 {i+1}: 周期 = {Period[i]:.6f} 秒, 频率 = {Frequency[i]:.6f} Hz")
+    # =============================打印信息================================
+    # print(f"模态分析结果: 共 {len(Period)} 个模态")
+    # for i in range(min(num_modes, len(Period))):
+    #     modal_periods.append(Period[i])
+    #     modal_freqs.append(Frequency[i])
+    #     print(f"模态 {i+1}: 周期 = {Period[i]:.6f} 秒, 频率 = {Frequency[i]:.6f} Hz")
 
     # 2. 获取所有节点的振型（模态位移）
     # eItemTypeElm 枚举，GroupElm=2
@@ -783,6 +784,7 @@ def get_modal_results(model, num_modes=15, group_name="ALL"):
     if ret2[-1] != 0:
         print(f"获取振型结果失败，错误码: {ret2}")
         return modal_periods, modal_freqs, None
+    
     NumberResults2 = ret2[0]
     Obj = ret2[1]
     Elm = ret2[2]
@@ -814,9 +816,6 @@ def get_modal_results(model, num_modes=15, group_name="ALL"):
     })
     print(f"已获取{len(df_shapes)}个节点的振型数据。前5行：")
     print(df_shapes.head())
-
-    # 导出模态振型数据到CSV文件
-    df_shapes.to_csv("modal_shapes.csv", index=False)
     
     return modal_periods, modal_freqs, df_shapes
 
@@ -850,6 +849,12 @@ def get_node_coordinates(model, node_names="ALL"):
             x, y, z = ret[0], ret[1], ret[2]
             node_coords[point_name] = (x, y, z)
 
+    # 获取刚性隔板约束中心节点名称
+    ret = model.ConstraintDef.GetNameList()
+    if ret[-1] == 0:
+        print(f"获取刚性隔板约束中心节点名称成功，共{ret[0]}个约束")
+    diaphragm_constraint_names = ret[1]
+    
     Center_coords = (sum(coord[0] for coord in node_coords.values()) / len(node_coords),
                      sum(coord[1] for coord in node_coords.values()) / len(node_coords))
     print(f"模型的中心坐标为: {Center_coords}")
@@ -898,7 +903,7 @@ def main():
     ret = SapModel.Analyze.RunAnalysis()
     # 获取模型的所有节点坐标信息
     node_coords, Center_coords = get_node_coordinates(SapModel)
-    # 打印最后10个节点的坐标信息
+    # =================打印最后10个节点的坐标信息=========================
     # print("\n最后10个节点的坐标信息:")
     # for point_name in list(node_coords.keys())[-10:]:
     #     x, y, z = node_coords[point_name]
@@ -917,6 +922,7 @@ def main():
                          105900, 109500, 113100, 116700, 120300, 123900, 127500, 131100, 134700, 138300, 141900, 145500, 
                          149100, 152700, 156300, 159900, 163500, 167100, 170700, 174300, 177900, 181500, 185100, 188700, 
                          192300, 196150, 200000]
+    
     for z in target_Floor_z:
         Floor_Masses[z] = [0, 0, 0, 0, 0, 0]
 
@@ -929,15 +935,18 @@ def main():
             mass = list(mass)
             mass[5] = mass[0]*((Center_coords[0]-x)/1000)**2 + mass[1]*((Center_coords[1]-y)/1000)**2
             Floor_Masses[z] = [x + y for x, y in zip(Floor_Masses[z], mass)]
-    # 打印每层的质量信息
-    print(f"\n模型中共有 {len(Floor_Masses)} 层，每层的质量信息如下:")
-    for z, mass in Floor_Masses.items():
-        print(f"层 {z}: 质量 = {mass}")
+    # ======================打印每层的质量信息============================
+    # print(f"\n模型中共有 {len(Floor_Masses)} 层，每层的质量信息如下:")
+    # for z, mass in Floor_Masses.items():
+    #     print(f"层 {z}: 质量 = {mass}")
 
-    modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=15)
+    modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=30)
+
     print(f"df_shapes的尺寸为: {df_shapes.shape}\n前5行振型数据:")
     print(df_shapes.head())
 
+    # 导出模态振型数据到CSV文件
+    # df_shapes.to_csv("modal_shapes.csv", index=False)
 if __name__ == "__main__":
     main()
 
