@@ -828,6 +828,14 @@ def get_node_coordinates(model):
     """
     node_coords = {}
     # 获取所有节点的ID
+    ret = model.PointObj.GetNameList()
+    if ret[-1] != 0:
+        print(f"获取节点列表失败，错误代码: {ret[-1]}")
+    
+    number_points = ret[0]
+    print(f"模型中共有 {number_points} 个节点")
+    point_names = ret[1]
+
     node_ids = model.PointObj.GetAll()
     for node_id in node_ids:
         # 获取每个节点的坐标
