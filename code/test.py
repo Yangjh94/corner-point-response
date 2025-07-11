@@ -830,25 +830,31 @@ def get_node_coordinates(model, node_names="ALL"):
         node_coords: 节点坐标的字典，包含节点ID和对应的坐标（x, y, z）
     """
     node_coords = {}
-    # 获取所有节点的ID
-    ret = model.PointObj.GetNameList()
-    if ret[-1] != 0:
-        print(f"获取节点列表失败，错误代码: {ret[-1]}")
-        return node_coords
-
-    number_points = ret[0]
-    print(f"模型中共有 {number_points} 个节点")
-    point_names = ret[1]
-
-    for point_name in point_names:
-        # 获取每个节点的坐标
-        ret = model.PointObj.GetCoordCartesian(point_name)
+    if node_names == "ALL":
+        # 获取所有节点的ID
+        ret = model.PointObj.GetNameList()
         if ret[-1] != 0:
-            print(f"获取节点 {point_name} 的坐标失败，错误代码: {ret[-1]}")
-            continue
-        x, y, z = ret[0], ret[1], ret[2]
-        node_coords[point_name] = (x, y, z)
-    return node_coords
+            print(f"获取节点列表失败，错误代码: {ret[-1]}")
+            return node_coords
+
+        number_points = ret[0]
+        print(f"模型中共有 {number_points} 个节点")
+        point_names = ret[1]
+
+        for point_name in point_names:
+            # 获取每个节点的坐标
+            ret = model.PointObj.GetCoordCartesian(point_name)
+            if ret[-1] != 0:
+                print(f"获取节点 {point_name} 的坐标失败，错误代码: {ret[-1]}")
+                continue
+            x, y, z = ret[0], ret[1], ret[2]
+            node_coords[point_name] = (x, y, z)
+
+    Center_coords = (sum(coord[0] for coord in node_coords.values()) / len(node_coords),
+                     sum(coord[1] for coord in node_coords.values()) / len(node_coords))
+    print(f"模型的中心坐标为: {Center_coords}")
+
+    return node_coords, Center_coords
 
 def get_node_mass(model, node_names="ALL"):
     """
@@ -891,7 +897,7 @@ def main():
     ret = SapModel.Analyze.SetRunCaseFlag("MODAL", True)
     ret = SapModel.Analyze.RunAnalysis()
     # 获取模型的所有节点坐标信息
-    node_coords = get_node_coordinates(SapModel)
+    node_coords, Center_coords = get_node_coordinates(SapModel)
     # 打印最后10个节点的坐标信息
     # print("\n最后10个节点的坐标信息:")
     # for point_name in list(node_coords.keys())[-10:]:
@@ -906,19 +912,32 @@ def main():
 
     # 将node_coords和node_masses中标高一直的节点质量进行求和
     Floor_Masses = {}
-    for point_name, mass in list(node_masses.items())[2106:]:
+    target_Floor_z = [6000, 10500, 15000, 19500, 23100, 26700, 30300, 33900, 37500, 41100, 44700, 48300, 51900, 55500, 
+                         59100, 62700, 66300, 69900, 73500, 77100, 80700, 84300, 87900, 91500, 95100, 98700, 102300, 
+                         105900, 109500, 113100, 116700, 120300, 123900, 127500, 131100, 134700, 138300, 141900, 145500, 
+                         149100, 152700, 156300, 159900, 163500, 167100, 170700, 174300, 177900, 181500, 185100, 188700, 
+                         192300, 196150, 200000]
+    for z in target_Floor_z:
+        Floor_Masses[z] = [0, 0, 0, 0, 0, 0]
+
+    for point_name, mass in list(node_masses.items())[2000:]:
         # 获取节点坐标
-        z = round(node_coords[point_name][2], 0) # 保留0位小数
-        if z not in Floor_Masses:
-            Floor_Masses[z] = [0, 0, 0, 0, 0, 0]
+        x, y, z = node_coords[point_name] # 保留0位小数
+        z = round(z, 0)
+        if z in Floor_Masses:
+            # 将元组转化为列表，以便修改
+            mass = list(mass)
+            mass[5] = mass[0]*((Center_coords[0]-x)/1000)**2 + mass[1]*((Center_coords[1]-y)/1000)**2
             Floor_Masses[z] = [x + y for x, y in zip(Floor_Masses[z], mass)]
-    
     # 打印每层的质量信息
-    print("\n每层的质量信息:")
+    print(f"\n模型中共有 {len(Floor_Masses)} 层，每层的质量信息如下:")
     for z, mass in Floor_Masses.items():
         print(f"层 {z}: 质量 = {mass}")
 
-    # modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=15)
+    modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=15)
+    print(f"df_shapes的尺寸为: {df_shapes.shape}\n前5行振型数据:")
+    print(df_shapes.head())
 
 if __name__ == "__main__":
     main()
+
