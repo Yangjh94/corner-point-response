@@ -820,9 +820,12 @@ def get_modal_results(model, num_modes=15, group_name="ALL"):
     
     return modal_periods, modal_freqs, df_shapes
 
-def get_node_coordinates(model):
+def get_node_coordinates(model, node_names="ALL"):
     """
-    获取SAP2000模型的所有节点坐标信息
+    获取SAP2000模型的节点坐标信息,如果 node_names 为 "ALL"，则获取所有节点的坐标。
+    参数:
+        model: SAP2000模型对象
+        node_names: 节点名称列表，默认为"ALL"表示获取所有节点的坐标
     返回：
         node_coords: 节点坐标的字典，包含节点ID和对应的坐标（x, y, z）
     """
@@ -831,17 +834,56 @@ def get_node_coordinates(model):
     ret = model.PointObj.GetNameList()
     if ret[-1] != 0:
         print(f"获取节点列表失败，错误代码: {ret[-1]}")
-    
+        return node_coords
+
     number_points = ret[0]
     print(f"模型中共有 {number_points} 个节点")
     point_names = ret[1]
 
-    node_ids = model.PointObj.GetAll()
-    for node_id in node_ids:
+    for point_name in point_names:
         # 获取每个节点的坐标
-        x, y, z = model.PointObj.GetCoord(node_id)
-        node_coords[node_id] = (x, y, z)
+        ret = model.PointObj.GetCoordCartesian(point_name)
+        if ret[-1] != 0:
+            print(f"获取节点 {point_name} 的坐标失败，错误代码: {ret[-1]}")
+            continue
+        x, y, z = ret[0], ret[1], ret[2]
+        node_coords[point_name] = (x, y, z)
     return node_coords
+
+def get_node_mass(model, node_names="ALL"):
+    """
+    获取节点的质量信息，如果 node_names 为 "ALL"，则获取所有节点的质量。
+    参数:
+        model: SAP2000模型对象
+        node_names: 节点名称列表，默认为"ALL"表示获取所有节点的质量信息
+
+    返回:
+        mass_info: 包含节点名称和对应质量的字典
+    """
+    mass_info = {}
+    if node_names == "ALL":
+        # 获取所有节点的质量
+        ret = model.PointObj.GetMass("ALL")
+        if ret[-1] != 0:
+            print(f"获取所有节点质量失败，错误代码: {ret[-1]}")
+            return mass_info
+        
+        number_points = ret[0]
+        point_names = ret[1]
+        masses = ret[2]
+        
+        for i in range(number_points):
+            mass_info[point_names[i]] = masses[i]
+    else:
+        # 获取单个节点的质量
+        ret = model.PointObj.GetMass(node_names)
+        if ret[-1] != 0:
+            print(f"获取节点 {node_names} 的质量失败，错误代码: {ret[-1]}")
+            return mass_info
+
+        mass_info[node_names] = ret[0]
+    
+    return mass_info
 
 def main():
     # 连接到SAP2000
@@ -850,7 +892,19 @@ def main():
     ret = SapModel.Analyze.RunAnalysis()
     # 获取模型的所有节点坐标信息
     node_coords = get_node_coordinates(SapModel)
-    modal_periods, modal_freqs, df_shapes= get_modal_results(SapModel, num_modes=15)
+    # 打印最后10个节点的坐标信息
+    # print("\n最后10个节点的坐标信息:")
+    # for point_name in list(node_coords.keys())[-10:]:
+    #     x, y, z = node_coords[point_name]
+    #     print(f"节点 {point_name}: 坐标 = ({x:.3f}, {y:.3f}, {z:.3f})")
+
+    # 获取节点质量
+    node_mass = get_node_mass(SapModel)
+    # 打印最后10个节点的质量信息
+    for point_name in list(node_mass.keys())[-10:]:
+        print(f"节点 {point_name}: 质量 = {node_mass[point_name]:.3f}")
+
+    modal_periods, modal_freqs, df_shapes = get_modal_results(SapModel, num_modes=15)
 
 if __name__ == "__main__":
     main()
