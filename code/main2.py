@@ -517,7 +517,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         )
 
         if ret != 0:
-            print(f"获取节点加速度时程失败，错误码: {ret[-1]}")
+            print(f"获取节点加速度时程失败，错误码: {ret}")
             print(f"返回的错误信息: {ret}")
             print("请检查节点名称和荷载工况是否正确")
 
