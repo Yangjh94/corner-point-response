@@ -438,7 +438,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     ret = model.LoadCases.DirHistLinear.SetTimeIntegration(unified_case_name, 1, 0, 0.5, 0.25, 0, 0)
     ret = model.LoadCases.DirHistLinear.SetTimeStep(unified_case_name, num_rows, 1/fs)
     alpha = 0.025822 # 质量系数
-    beta = 0.015210 # 刚度系数
+    beta = 0.015210  # 刚度系数
     ret = model.LoadCases.DirHistLinear.SetDampProportional(unified_case_name, 1, alpha, beta, 0, 0, 0, 0)
 
 
@@ -788,7 +788,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=330)
+                                                                        num_rows=330000)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
