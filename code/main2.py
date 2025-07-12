@@ -552,7 +552,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         print(f"当前Elm为: {Elm}")
         print(f"当前ACase为: {ACase}")
         print(f"当前StepType为: {StepType}")
-        print(f"当前StepNum为: {StepNum}")
+        # print(f"当前StepNum为: {StepNum}")
 
         print("\n位移响应统计:")
         print(f"X方向最大位移: {max(ux_list, key=abs):.6f} mm")
@@ -637,16 +637,16 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
             print(f"加速度响应时程已保存至: {output_acce_file_with_timestamp}")
 
         # 同时输出一个计算信息文档
-        info_file = os.path.join(output_dir, f"{timestamp}_node_response_info.txt")
-        with open(info_file, 'w') as f:
-            f.write("节点响应信息\n")
-            f.write("=" * 30 + "\n")
-            f.write(f"荷载工况: {load_case}\n")
-            f.write(f"时间步长: {time_step}\n")
-            f.write(f"位移结果数量: {len(displacement_results[0])}\n")
-            f.write(f"加速度结果数量: {len(acceleration_results[0])}\n")
-            f.write(f"输出文件: {output_disp_file_with_timestamp}\n")
-            f.write(f"加速度输出文件: {output_acce_file_with_timestamp}\n")
+        # info_file = os.path.join(output_dir, f"{timestamp}_node_response_info.txt")
+        # with open(info_file, 'w') as f:
+        #     f.write("节点响应信息\n")
+        #     f.write("=" * 30 + "\n")
+        #     f.write(f"荷载工况: {load_case}\n")
+        #     f.write(f"时间步长: {time_step}\n")
+        #     f.write(f"位移结果数量: {len(displacement_results[0])}\n")
+        #     f.write(f"加速度结果数量: {len(acceleration_results[0])}\n")
+        #     f.write(f"输出文件: {output_disp_file_with_timestamp}\n")
+        #     f.write(f"加速度输出文件: {output_acce_file_with_timestamp}\n")
 
         return time_points, displacement_results, acceleration_results
         
@@ -774,10 +774,11 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
 
     # 指定风荷载时程数据文件路径，然后循环运行程序
-    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
-    #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
-    #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv"]
-    wind_file = ["Model2_10yr_030.csv"]  # 测试时可以只使用一个文件
+    wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
+                 "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
+                 "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
+                 "Model2_10yr_045.csv"]
+    # wind_file = ["Model2_10yr_030.csv"]  # 测试时可以只使用一个文件
 
     # 初始化结果存储列表
     all_results = []
