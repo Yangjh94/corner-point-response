@@ -437,6 +437,10 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     )
     ret = model.LoadCases.DirHistLinear.SetTimeIntegration(unified_case_name, 1, 0, 0.5, 0.25, 0, 0)
     ret = model.LoadCases.DirHistLinear.SetTimeStep(unified_case_name, num_rows, 1/fs)
+    alpha = 0.025822 # 质量系数
+    beta = 0.015210 # 刚度系数
+    ret = model.LoadCases.DirHistLinear.SetDampProportional(unified_case_name, 1, alpha, beta, 0, 0, 0, 0)
+
 
     if ret != 0:
         print(f"将荷载关联到时程工况失败, 错误码: {ret}")
@@ -490,13 +494,13 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         time_step = ret[1]
         print(f"时程分析包含 {num_steps} 个时间步，步长为 {time_step} 秒")
 
-        ret = model.Results.Setup.DeselectAllCasesAndCombosForOutput() # 取消选择所有结果输出
+        ret = model.Results.Setup.DeselectAllCasesAndCombosForOutput() # 取消选择所有默认结果输出
         ret = model.Results.Setup.SetCaseSelectedForOutput(load_case)  # 选择当前荷载工况
-        ret = model.Results.Setup.SetTimeStepForOutput(1)  # 设置输出时间步长为1
+        ret = model.Results.Setup.SetOptionDirectHist(2)  # 设置输出时间步长为1：包络，2：逐步，3：最后一步
 
         # 获取位移结果（注意正确的方法名）
-        GroupElm = 0
         NumberResults = 0
+        GroupElm = 0
         Obj = []
         Elm = []
         LoadCase = [load_case]
@@ -505,7 +509,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
         
         [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = \
-        model.Results.JointDispl(
+        model.Results.JointDisplAbs(
             node_name, 
             GroupElm, 
             NumberResults, 
@@ -631,6 +635,18 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
 
             df_acc.to_csv(output_acce_file_with_timestamp, index=False)
             print(f"加速度响应时程已保存至: {output_acce_file_with_timestamp}")
+
+        # 同时输出一个计算信息文档
+        info_file = os.path.join(output_dir, f"{timestamp}_node_response_info.txt")
+        with open(info_file, 'w') as f:
+            f.write("节点响应信息\n")
+            f.write("=" * 30 + "\n")
+            f.write(f"荷载工况: {load_case}\n")
+            f.write(f"时间步长: {time_step}\n")
+            f.write(f"位移结果数量: {len(displacement_results[0])}\n")
+            f.write(f"加速度结果数量: {len(acceleration_results[0])}\n")
+            f.write(f"输出文件: {output_disp_file_with_timestamp}\n")
+            f.write(f"加速度输出文件: {output_acce_file_with_timestamp}\n")
 
         return time_points, displacement_results, acceleration_results
         
@@ -806,7 +822,6 @@ def main():
 
         for target_node in target_nodes:
             print(f"\n获取节点 {target_node} 的位移和加速度响应...")
-
             output_path = os.path.join(results_dir, f"{target_node}.csv")
 
             # 获取位移响应时程

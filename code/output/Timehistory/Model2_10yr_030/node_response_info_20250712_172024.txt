@@ -1,0 +1,8 @@
+节点响应信息
+==============================
+荷载工况: Wind_time_history
+时间步长: 0.12015331563074484
+位移结果数量: 34
+加速度结果数量: 34
+输出文件: d:\MyFiles\GitHub\corner-point-response\code\output\Timehistory\Model2_10yr_030\20250712_172024_54000079_disp.csv
+加速度输出文件: d:\MyFiles\GitHub\corner-point-response\code\output\Timehistory\Model2_10yr_030\20250712_172024_54000079_acce.csv
