@@ -269,7 +269,6 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     # 生成时间序列
     MyTime  = [i/fs for i in range(0, len(df))]
     print(f"时程数据共有 {len(df)} 行，采样频率 {fs}Hz")
-    print(f"时间序列前5个值: {MyTime[:5]}")
     
     # 限值缝隙行数以加快测试速度（实际分析请移除次限制）
     num_columns = df.shape[1]
@@ -278,14 +277,12 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     MyTime = MyTime[:num_rows]
 
     # 删除可能存在的旧荷载模式和时程函数
-    # 删除旧的荷载模式
     existing_patterns = []
     ret = model.LoadPatterns.GetNameList()
     existing_patterns = ret[1]
         
     for pattern in existing_patterns:
         if pattern.startswith("Wind_"):
-            print(pattern)
             ret = model.LoadPatterns.Delete(pattern) # 无法删除荷载模式是什么原因
             if ret != 0:
                 print(f"删除荷载模式 {pattern} 失败，错误码: {ret}")
@@ -304,29 +301,24 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
             else:
                 print(f"已删除时程函数: {func}")
 
-    # 创建模态分析工况
+    # 设置模态分析工况
     print("创建模态分析工况...")
     ret = model.LoadCases.Delete("MODAL")  # 先删除可能存在的旧模态工况
     ret = model.LoadCases.ModalEigen.SetCase("MODAL")
     ret = model.LoadCases.ModalEigen.SetNumberModes("MODAL", 30, 1)  # 设置计算前30阶模态
-    ret = model.LoadCases.ModalEigen.SetParameters("MODAL", 0.05, 0.0001, 1E-10, 1)
+    ret = model.LoadCases.ModalEigen.SetParameters("MODAL", 0, 0, 1E-10, 1)
 
-    # ret = model.LoadCases.ModalEigen.SetMaxCycles("MODAL", 100)  # 设置最大迭代次数
-    # ret = model.LoadCases.ModalEigen.SetConvergenceTol("MODAL", 1e-6)  # 设置收敛容差
-
-    # 将原来的直接积分时程分析改为模态时程分析
     unified_case_name = "Wind_time_history"
     ret = model.LoadCases.Delete(unified_case_name)  # 删除可能存在的旧工况
     ret = model.LoadCases.ModHistLinear.SetCase(unified_case_name)  # 创建模态时程分析工况
     if ret != 0:
         print(f"创建时程工况失败: {unified_case_name}")
-        return 0
-    
+        
     # 设置模态时程分析的参数
     ret = model.LoadCases.ModHistLinear.SetModalCase(unified_case_name, "MODAL")  # 指定模态分析工况
-    # ret = model.LoadCases.ModHistLinear.SetNumberModes(unified_case_name, 15)  # 使用前30阶模态
+    # ret = model.LoadCases.ModHistLinear.SetNumberModes(unified_case_name, 30)  # 使用前30阶模态
     ret = model.LoadCases.ModHistLinear.SetTimeStep(unified_case_name, num_rows, 1/fs)
-    ret = model.LoadCases.ModHistLinear.SetDampConstant(unified_case_name, 0.015)  # 设置1.5%的阻尼比
+    ret = model.LoadCases.ModHistLinear.SetDampConstant(unified_case_name, 0.02)  # 设置2%的阻尼比
 
     print(f"创建模态时程分析工况: {unified_case_name}")
 
@@ -398,7 +390,6 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
         coord_systems.append("Global")
         angles.append(0.0)
 
-
         col_idx += 1
         # 提取当前列的风荷载数据
         col_data = df[col_idx].values.tolist()
@@ -413,7 +404,6 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
         print(f"在隔板 {constraint_name} 中心点 {point_name} 添加风荷载Z方向风荷载时程函数: {Wind_func_name}")
         
         # 将荷载参数添加到列表
-        # Z方向
         load_types.append("Load")
         load_patterns.append(LoadPatternName)
         func_names.append(Wind_func_name)
@@ -444,21 +434,9 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
         coord_systems,
         angles
     )
-    # ret = model.LoadCases.DirHistLinear.SetTimeIntegration(unified_case_name, 1, 0, 0.5, 0.25, 0, 0)
-    # ret = model.LoadCases.DirHistLinear.SetTimeStep(unified_case_name, num_rows, 1/fs)
-    ret = model.LoadCases.ModHistLinear.SetModalCase(unified_case_name, "MODAL")  # "MODAL"为模态分析工况名
-    # ret = model.LoadCases.ModHistLinear.SetNumberModes(unified_case_name, 15)
-
-    ret = model.LoadCases.ModHistLinear.SetDampConstant(unified_case_name, 0.015)
-
-    if ret != 0:
-        print(f"将荷载关联到时程工况失败, 错误码: {ret}")
-    else:
-        print(f"成功将所有荷载关联到时程工况 {unified_case_name}")
 
     # 设置运行工况
     ret = model.Analyze.SetRunCaseFlag(unified_case_name, True)
-    
     print(f"风荷载时程曲线添加完成，共添加了 {col_idx} 个荷载")
 
     return col_idx, diaphragm_centers
@@ -517,7 +495,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
     U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
 
     # 正确的调用方式，接收所有返回值
-    ret = model.Results.JointDispl(
+    [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = model.Results.JointDispl(
         node_name, 
         GroupElm,  # 使用0表示按对象获取结果
         NumberResults, 
@@ -528,21 +506,6 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         StepNum,
         U1, U2, U3, R1, R2, R3 
     )
-    print(f"ret: {ret}")  # 打印返回值进行调试
-
-    # 检查返回值
-    if ret != 0:
-        print(f"获取结果失败，错误码: {ret}")
-    else:
-        print(f"成功获取 {NumberResults} 条结果")
-        # 打印一些结果信息进行检查
-        if NumberResults > 0:
-            print(f"第一个结果: U1={U1[0]}, U2={U2[0]}, U3={U3[0]}")
-
-    # if ret != 0:
-    #     print(f"获取节点加速度时程失败，错误码: {ret[-1]}")
-    #     print(f"返回的错误信息: {ret}")
-    #     print("请检查节点名称和荷载工况是否正确")
 
     ux_list = U1  # X方向位移
     uy_list = U2  # Y方向位移
@@ -566,11 +529,11 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
     print(f"获取节点 {node_name} 的位移响应时程成功！")
     print(f"当前荷载工况为: {load_case}")
     print(f"当前NumberResults为: {NumberResults}")
-    print(f"当前Obj为: {Obj}")
-    print(f"当前Elm为: {Elm}")
+    # print(f"当前Obj为: {Obj}")
+    # print(f"当前Elm为: {Elm}")
     # print(f"当前ACase为: {ACase}")
-    print(f"当前StepType为: {StepType}")
-    print(f"当前StepNum为: {StepNum}")
+    # print(f"当前StepType为: {StepType}")
+    # print(f"当前StepNum为: {StepNum}")
 
     print("\n位移响应统计:")
     print(f"X方向最大位移: {max(ux_list, key=abs):.6f} mm")
@@ -585,27 +548,25 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
 
     # 获取节点加速度
     GroupElm = 0
-    NumberResults = []
+    NumberResults = 0
     Obj = []
     Elm = []
     LoadCase = [load_case]
-    StepType = ["Time"]
+    StepType = []
     StepNum = []
     U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
     
-    [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = \
-    model.Results.JointAcc(
-        node_name, 
-        GroupElm, 
-        NumberResults, 
-        Obj, 
-        Elm, 
-        LoadCase, 
-        StepType, 
-        StepNum,
-        U1, U2, U3, R1, R2, R3 
-    )
-    
+    [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = model.Results.JointAccAbs(
+            node_name, 
+            GroupElm, 
+            NumberResults, 
+            Obj, 
+            Elm, 
+            LoadCase, 
+            StepType, 
+            StepNum,
+            U1, U2, U3, R1, R2, R3 
+        )
     
     ux_list = U1  # X方向加速度
     uy_list = U2  # Y方向加速度
@@ -775,10 +736,11 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
 
     # 指定风荷载时程数据文件路径，然后循环运行程序
-    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
-    #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
-    #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv"]
-    wind_file = ["Model2_10yr_000.csv"]  # 测试时可以只使用一个文件
+    wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
+                 "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
+                 "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
+                 "Model2_10yr_045.csv"]
+    # wind_file = ["Model2_10yr_000.csv"]  # 测试时可以只使用一个文件
 
     # 初始化结果存储列表
     all_results = []
@@ -789,7 +751,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=33)
+                                                                        num_rows=330000)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
@@ -817,7 +779,7 @@ def main():
         wind_file_name = os.path.basename(wind_file_path)
         wind_file_base_name = os.path.splitext(wind_file_name)[0]
 
-        results_dir = os.path.join(script_dir, "output","Timehistory",f"{wind_file_base_name}") # 确保结果目录存在
+        results_dir = os.path.join(script_dir, "output","Timehistory_modal",f"{wind_file_base_name}") # 确保结果目录存在
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
