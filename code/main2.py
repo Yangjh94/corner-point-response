@@ -490,8 +490,9 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
         time_step = ret[1]
         print(f"时程分析包含 {num_steps} 个时间步，步长为 {time_step} 秒")
 
-        ret = model.Results.Setup.DeselectAllCasesAndCombosForOutput()
-        ret = model.Results.Setup.SetCaseSelectedForOutput(load_case)
+        ret = model.Results.Setup.DeselectAllCasesAndCombosForOutput() # 取消选择所有结果输出
+        ret = model.Results.Setup.SetCaseSelectedForOutput(load_case)  # 选择当前荷载工况
+        ret = model.Results.Setup.SetTimeStepForOutput(1)  # 设置输出时间步长为1
 
         # 获取位移结果（注意正确的方法名）
         GroupElm = 0
@@ -771,7 +772,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=33)
+                                                                        num_rows=330)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
@@ -799,11 +800,10 @@ def main():
         wind_file_name = os.path.basename(wind_file_path)
         wind_file_base_name = os.path.splitext(wind_file_name)[0]
 
-        results_dir = os.path.join(script_dir, "output",f"{wind_file_base_name}") # 确保结果目录存在
+        results_dir = os.path.join(script_dir, "output", "Timehistory",f"{wind_file_base_name}") # 确保结果目录存在
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
-        
         for target_node in target_nodes:
             print(f"\n获取节点 {target_node} 的位移和加速度响应...")
 

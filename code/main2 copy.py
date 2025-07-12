@@ -789,7 +789,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=5)
+                                                                        num_rows=33)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
@@ -817,7 +817,7 @@ def main():
         wind_file_name = os.path.basename(wind_file_path)
         wind_file_base_name = os.path.splitext(wind_file_name)[0]
 
-        results_dir = os.path.join(script_dir, "output",f"{wind_file_base_name}") # 确保结果目录存在
+        results_dir = os.path.join(script_dir, "output","Timehistory",f"{wind_file_base_name}") # 确保结果目录存在
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
