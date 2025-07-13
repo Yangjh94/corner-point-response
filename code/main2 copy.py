@@ -538,7 +538,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
     print("\n位移响应统计:")
     print(f"X方向最大位移: {max(ux_list, key=abs):.6f} mm")
     print(f"Y方向最大位移: {max(uy_list, key=abs):.6f} mm")
-    print(f"Z方向最大位移: {max(uz_list, key=abs):.6f} mm")
+    print(f"Z方向最大位移: {max(rz_list, key=abs):.6f} mm")
     
     # 汇总位移结果
     displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
@@ -590,7 +590,7 @@ def get_node_response_history(model, node_name, load_case="Wind_time_history", o
     print("\n加速度响应统计:")
     print(f"X方向最大加速度: {max(ux_list, key=abs):.6f} mm")
     print(f"Y方向最大加速度: {max(uy_list, key=abs):.6f} mm")
-    print(f"Z方向最大加速度: {max(uz_list, key=abs):.6f} mm")
+    print(f"Z方向最大加速度: {max(rz_list, key=abs):.6f} mm")
 
     # 汇总加速度结果
     acceleration_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
@@ -736,11 +736,11 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前脚本目录
 
     # 指定风荷载时程数据文件路径，然后循环运行程序
-    wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
-                 "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
-                 "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
-                 "Model2_10yr_045.csv"]
-    # wind_file = ["Model2_10yr_000.csv"]  # 测试时可以只使用一个文件
+    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
+    #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
+    #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
+    #              "Model2_10yr_045.csv"]
+    wind_file = ["Model2_10yr_000.csv"]  # 测试时可以只使用一个文件
 
     # 初始化结果存储列表
     all_results = []
@@ -751,7 +751,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=330000)
+                                                                        num_rows=33)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:

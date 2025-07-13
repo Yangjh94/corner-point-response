@@ -1,0 +1,115 @@
+"""
+本程序主要用来处理风振分析文件，提取各方向风振响应极值，并将结果输出到指定文件中。
+"""
+# 导入所需的库
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+# 指定 output文件路径
+output_folder = os.path.join(os.getcwd(), "output", "Timehistory_modal")
+
+# 获取文件夹中的所有文件名称
+file_names = os.listdir(output_folder)
+
+# 初始化结果储存
+results = []
+
+# 遍历选中的文件夹
+for file_name in file_names:
+    # 获取子文件夹中所有的csv文件的名称
+    suboutput_folder = os.path.join(output_folder, file_name)
+    files_csv_names = [f for f in os.listdir(suboutput_folder) if f.endswith(".csv")]
+
+    # 输出子文件夹中的csv文件名称
+    # print(f"子文件夹 '{file_name}' 中的csv文件名称:")
+    # for csv_file in files_csv_names:
+    #     print(csv_file)
+
+    # 选择前10个csv文件进行处理
+    for csv_file in files_csv_names[-10:]:
+        # 拼接完整路径
+        file_path = os.path.join(suboutput_folder, csv_file)
+        print(f"正在处理文件: {file_path}")
+        # 读取csv文件
+        df = pd.read_csv(file_path)
+        
+        # 处理数据：计算每列的平均值
+        mean_values = df.mean()
+        std_values = df.std()
+
+        # 将结果存储到列表中
+        results.append({
+            "file": csv_file,
+            "folder": file_name,
+            "mean": mean_values.to_dict(),
+            "std": std_values.to_dict()
+        })
+
+# 输出结果
+for result in results:
+    print(f"文件: {result['file']} (文件夹: {result['folder']})")
+    print(f"均值: {result['mean']}")
+    print(f"标准差: {result['std']}")
+# 将结果转换为 DataFrame
+results_df = pd.DataFrame(results)
+
+# 将均值和标准差格式化为两位小数
+results_df['mean'] = results_df['mean'].apply(lambda x: {k: round(v, 2) for k, v in x.items()})
+results_df['std'] = results_df['std'].apply(lambda x: {k: round(v, 2) for k, v in x.items()})
+
+# 将均值和标准差展开为单独的列
+mean_df = pd.DataFrame(results_df['mean'].tolist()).add_prefix('mean_')
+std_df = pd.DataFrame(results_df['std'].tolist()).add_prefix('std_')
+
+# 合并均值和标准差列到结果表格
+results_df = pd.concat([results_df.drop(['mean', 'std'], axis=1), mean_df, std_df], axis=1)
+# 检查列名是否匹配
+if not mean_df.columns.equals(std_df.columns):
+    print("列名不匹配，调整列名。")
+    std_df.columns = mean_df.columns
+
+# 逐列计算均值和3.5倍标准差的相加结果
+new_column = pd.DataFrame()
+for col in mean_df.columns:
+    new_column[f'new_{col}'] = mean_df[col] + 3.5 * std_df[col]
+
+# 检查新列数据
+print("New Column Data:")
+print(new_column)
+
+# 将新列合并到结果表格
+results_df = pd.concat([results_df, new_column], axis=1)
+print(results_df)
+
+# 保存结果表格到文件到上一级目录中
+output_folder = os.path.dirname(output_folder)
+output_file_path = os.path.join(output_folder, "结果统计.csv")
+results_df.to_csv(output_file_path, index=False, encoding="utf-8-sig")
+print(f"结果表格已保存到: {output_file_path}")
+
+# 绘制图片
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置字体为黑体，显示中文字符
+plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+
+plt.figure(figsize=(12, 6))
+
+# 遍历每列数据进行绘制
+for i, result in enumerate(results):
+    mean_values = pd.Series(result["mean"])
+    std_values = pd.Series(result["std"])
+    
+    # 绘制均值
+    plt.plot(mean_values.index, mean_values.values, label=f"{result['file']} - 均值")
+    
+    # 绘制标准差
+    plt.fill_between(mean_values.index, 
+                     mean_values.values - std_values.values, 
+                     mean_values.values + std_values.values, 
+                     alpha=0.2, label=f"{result['file']} - 标准差")
+
+plt.title("节点位移和加速度均值与标准差")
+plt.xlabel("指标")
+plt.ylabel("值")
+plt.legend(loc="upper right")
+plt.grid(True)
+plt.show()
