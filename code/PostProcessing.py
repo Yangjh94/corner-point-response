@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 # 指定 output文件路径
-output_folder = os.path.join(os.getcwd(), "output", "Timehistory_modal")
+output_folder = os.path.join(os.getcwd(), "output", "Timehistory")
 
 # 获取文件夹中的所有文件名称
 file_names = os.listdir(output_folder)
