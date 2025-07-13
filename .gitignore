@@ -177,3 +177,13 @@ cython_debug/
 
 1.1model2/
 1.1model3/
+data/rew/1-1model2/
+data/rew/1-1model3/
+
+data/raw/1-1model2/1栋-QG.$2k
+data/raw/1-1model2/1栋-QG.ico
+data/raw/1-1model2/1栋-QG.msh
+data/raw/1-1model2/1栋-QG.OUT
+data/raw/1-1model2/1栋-QG.s2k
+data/raw/1-1model2/1栋-QG.sbk
+data/raw/1-1model2/1栋-QG.sdb
