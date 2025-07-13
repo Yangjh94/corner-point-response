@@ -3,7 +3,10 @@
 风振分析程序的主要执行文件
 """
 
-from sap2000_analyzer import WindAnalysisManager
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
+from utils.io_utils.wind_manager import WindAnalysisManager
 
 def main():
     """主程序 - 简化版"""

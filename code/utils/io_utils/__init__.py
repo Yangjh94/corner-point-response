@@ -9,7 +9,7 @@ from .wind_manager import WindAnalysisManager
 from .utils import get_timestamp, create_unique_filename
 
 __version__ = "1.0.0"
-__author__ = "Your Name"
+__author__ = "YJh"
 
 # 导出主要类和函数
 __all__ = [
