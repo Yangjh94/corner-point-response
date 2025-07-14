@@ -14,17 +14,11 @@ file_names = os.listdir(output_folder)
 
 # 初始化结果储存
 results = []
-
 # 遍历选中的文件夹
 for file_name in file_names:
     # 获取子文件夹中所有的csv文件的名称
     suboutput_folder = os.path.join(output_folder, file_name)
     files_csv_names = [f for f in os.listdir(suboutput_folder) if f.endswith(".csv")]
-
-    # 输出子文件夹中的csv文件名称
-    # print(f"子文件夹 '{file_name}' 中的csv文件名称:")
-    # for csv_file in files_csv_names:
-    #     print(csv_file)
 
     # 选择前5个csv文件进行处理
     for csv_file in files_csv_names[-5:]:
@@ -46,12 +40,6 @@ for file_name in file_names:
             "std": std_values.to_dict()
         })
 
-# 输出结果
-# for result in results:
-#     print(f"文件: {result['file']} (文件夹: {result['folder']})")
-#     print(f"均值: {result['mean']}")
-#     print(f"标准差: {result['std']}")
-# 将结果转换为 DataFrame
 results_df = pd.DataFrame(results)
 
 # 将均值和标准差格式化为两位小数
