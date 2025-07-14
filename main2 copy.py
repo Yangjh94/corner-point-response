@@ -633,11 +633,10 @@ def create_unique_filename(base_path, type, timestamp=None):
     # 如果base_path包含扩展名，分离出来
     if '.' in filename:
         name_part, ext_part = os.path.splitext(filename)
+        timestamped_filename = f"{timestamp}_{name_part}_{type}{ext_part}"
     else:
         name_part = filename
-
-    # 创建带时间戳的文件名：文件名_时间戳
-    timestamped_filename = f"{timestamp}_{name_part}_{type}"
+        timestamped_filename = f"{timestamp}_{name_part}_{type}.csv"
 
     return os.path.join(directory, timestamped_filename)
 
