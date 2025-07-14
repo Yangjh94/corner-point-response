@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # 指定 output文件路径
-output_folder = os.path.join(os.getcwd(), "output", "Timehistory")
+output_folder = os.path.join(os.getcwd(), "data", "output", "Timehistory_modal", "1-1", "Acceleration")
 
 # 获取文件夹中的所有文件名称
 file_names = os.listdir(output_folder)
@@ -26,8 +26,8 @@ for file_name in file_names:
     # for csv_file in files_csv_names:
     #     print(csv_file)
 
-    # 选择前10个csv文件进行处理
-    for csv_file in files_csv_names[-10:]:
+    # 选择前5个csv文件进行处理
+    for csv_file in files_csv_names[-5:]:
         # 拼接完整路径
         file_path = os.path.join(suboutput_folder, csv_file)
         print(f"正在处理文件: {file_path}")
@@ -47,10 +47,10 @@ for file_name in file_names:
         })
 
 # 输出结果
-for result in results:
-    print(f"文件: {result['file']} (文件夹: {result['folder']})")
-    print(f"均值: {result['mean']}")
-    print(f"标准差: {result['std']}")
+# for result in results:
+#     print(f"文件: {result['file']} (文件夹: {result['folder']})")
+#     print(f"均值: {result['mean']}")
+#     print(f"标准差: {result['std']}")
 # 将结果转换为 DataFrame
 results_df = pd.DataFrame(results)
 
@@ -88,29 +88,3 @@ output_file_path = os.path.join(output_folder, "结果统计.csv")
 results_df.to_csv(output_file_path, index=False, encoding="utf-8-sig")
 print(f"结果表格已保存到: {output_file_path}")
 
-# 绘制图片
-plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置字体为黑体，显示中文字符
-plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
-
-plt.figure(figsize=(12, 6))
-
-# 遍历每列数据进行绘制
-for i, result in enumerate(results):
-    mean_values = pd.Series(result["mean"])
-    std_values = pd.Series(result["std"])
-    
-    # 绘制均值
-    plt.plot(mean_values.index, mean_values.values, label=f"{result['file']} - 均值")
-    
-    # 绘制标准差
-    plt.fill_between(mean_values.index, 
-                     mean_values.values - std_values.values, 
-                     mean_values.values + std_values.values, 
-                     alpha=0.2, label=f"{result['file']} - 标准差")
-
-plt.title("节点位移和加速度均值与标准差")
-plt.xlabel("指标")
-plt.ylabel("值")
-plt.legend(loc="upper right")
-plt.grid(True)
-plt.show()
