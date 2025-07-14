@@ -11,6 +11,11 @@ import comtypes.client
 import time
 from datetime import datetime
 from collections import defaultdict # 用于存储楼层信息, 方便创建刚性隔板
+
+# 导入编写的函数工具
+# sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
+# from utils.io_utils.sap_model import SAP2000Model
+
 # from comtypes import gen  # 用于SAP2000 API的类型定义
 # # 确保comtypes可以找到SAP2000的类型库
 # if sys.platform.startswith('win'):
@@ -438,7 +443,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
 
     return col_idx, diaphragm_centers
         
-def get_node_response_history(model, node_name, load_case="Wind_time_history", output_file=None, timestamp=None):
+def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time_history", output_file=None, timestamp=None):
     """
     获取指定节点在指定荷载工况下的位移响应时程
     
@@ -701,11 +706,11 @@ def main():
     wind_load_filepath = "data\\raw\\WindloadTimes"
 
     # 指定风荷载时程数据文件路径，然后循环运行程序
-    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
-    #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
-    #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
-    #              "Model2_10yr_045.csv"]
-    wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
+    wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
+                 "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
+                 "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
+                 "Model2_10yr_045.csv"]
+    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
 
     # 记录程序开始时间
     start_time = time.time() # 记录开始时间
@@ -746,14 +751,14 @@ def main():
     # 初始化结果存储列表
     all_results = []
     for wind_file_name in wind_file:
-        
+        # 解锁模型，以便修改荷载
         model.SetModelIsLocked(False)
         wind_file_path = os.path.join(wind_file_paths, wind_file_name)
         wind_load_count, diaphragm_centers = add_wind_time_history_load(model, 
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=33)
+                                                                        num_rows=33000)
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
@@ -780,7 +785,6 @@ def main():
         # 在输出文件时包含 wind_file_path 中的文件名部分
         wind_file_name = os.path.basename(wind_file_path)
         wind_file_base_name = os.path.splitext(wind_file_name)[0]
-
         results_dir = "data\\output\\Timehistory_modal"
         results_dir = os.path.join(script_dir, results_dir,f"{wind_file_base_name}") # 确保结果目录存在
         if not os.path.exists(results_dir):
@@ -795,6 +799,8 @@ def main():
             times, displacements, accelerations = get_node_response_history(
                 model,
                 target_node,
+                Type = "acceleration",
+                damp = 0.02,
                 load_case="Wind_time_history", 
                 output_file=output_path
             )
