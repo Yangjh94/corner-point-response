@@ -16,27 +16,8 @@ from collections import defaultdict # 用于存储楼层信息, 方便创建刚�
 sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
 # Commented out as this import path appears to be invalid
 from utils.io_utils.sap_model import SAP2000Model
+from utils.io_utils.utils import *
 
-# from comtypes import gen  # 用于SAP2000 API的类型定义
-# # 确保comtypes可以找到SAP2000的类型库
-# if sys.platform.startswith('win'):
-#     # 添加SAP2000的类型库路径
-#     sap2000_tlb_path = Path("C:/Program Files/Computers and Structures/SAP2000 23/SAP2000v1.tlb")
-#     if sap2000_tlb_path.exists():
-#         comtypes.client.GetModule(str(sap2000_tlb_path))
-#     else:
-#         print(f"错误: 找不到SAP2000类型库文件: {sap2000_tlb_path}")
-#         sys.exit(1)
-# import comtypes.gen.SAP2000v1  # 导入SAP2000的类型定义
-    
-def get_timestamp():
-    """
-    获取当前时间戳，用于文件命名
-    
-    返回:
-        格式化的时间戳字符串 (YYYYMMDD_HHMMSS)
-    """
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 def add_diaphragms(model, target_elevations=None, tolerance=0.01):
     """
@@ -530,77 +511,6 @@ def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time
 
     return time_points, results
 
-def create_unique_filename(base_path, type, timestamp=None):
-    """
-    创建带时间戳的唯一文件名
-    
-    参数:
-        base_path: 基础文件路径（可能包含扩展名）
-        timestamp: 时间戳，如果为None则使用当前时间
-    
-    返回:
-        带时间戳的完整文件路径
-    """
-    if timestamp is None:
-        timestamp = get_timestamp()
-    
-    # 分离目录、文件名和扩展名
-    directory = os.path.dirname(base_path) # 获取目录部分，如果没有目录则为当前目录
-    filename = os.path.basename(base_path) # 获取文件名部分，不包含目录
-    
-    # 如果base_path包含扩展名，分离出来
-    if '.' in filename:
-        name_part, ext_part = os.path.splitext(filename)
-        timestamped_filename = f"{timestamp}_{name_part}_{type}{ext_part}"
-    else:
-        name_part = filename
-        timestamped_filename = f"{timestamp}_{name_part}_{type}.csv"
-
-    return os.path.join(directory, timestamped_filename)
-
-def summarize_results(all_results):
-    """
-    根据 all_results 统计 wind_file 的种类，并输出表格
-    
-    参数:
-        all_results: 包含所有节点响应结果的列表
-    
-    返回:
-        pandas.DataFrame 表格，包含 wind_file 的统计信息
-    """
-
-    # 提取 wind_file 和节点信息
-    summary_data = []
-    for result in all_results:
-        summary_data.append({
-            "wind_file": result["wind_file"],
-            "node": result["node"],
-            "time_steps": len(result["times"]),
-            "max_displacement": max(max(map(abs, result["displacements"][0]), default=0),  # X方向最大位移
-                                    max(map(abs, result["displacements"][1]), default=0),  # Y方向最大位移
-                                    max(map(abs, result["displacements"][2]), default=0)), # Z方向最大位移
-            "max_acceleration": max(max(map(abs, result["accelerations"][0]), default=0),  # X方向最大加速度
-                                    max(map(abs, result["accelerations"][1]), default=0),  # Y方向最大加速度
-                                    max(map(abs, result["accelerations"][2]), default=0))  # Z方向最大加速度
-        })
-
-    # 转换为 DataFrame
-    df_summary = pd.DataFrame(summary_data)
-
-    # 按 wind_file 分组统计
-    grouped_summary = df_summary.groupby("wind_file").agg({
-        "node": "count",  # 节点数量
-        "time_steps": "sum",  # 总时间步数
-        "max_displacement": "max",  # 最大位移
-        "max_acceleration": "max"  # 最大加速度
-    }).reset_index()
-
-    # 输出表格
-    print("\n统计结果表格:")
-    print(grouped_summary)
-
-    return grouped_summary
-
 def main():
     building_name = "1-1"  # 模型名称
     target_elevations = [6000, 10500, 15000, 19500, 23100, 26700, 30300, 33900, 37500, 41100, 44700, 48300, 51900, 55500, 
@@ -610,13 +520,18 @@ def main():
                          192300, 196150, 200000]
     
     # 添加风荷载时程曲线，使用自定义风荷载时程文件
-    wind_load_filepath = "data\\raw\\WindloadTimes"
+    wind_load_filepath = os.path.join("data", "raw", "WindloadTimes", building_name)
 
+    # 自动读取building_name文件夹下的所有CSV文件
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    wind_file_paths = os.path.join(script_dir, wind_load_filepath)
+    # 获取文件夹下的风荷载时程数据文件
+    wind_file = [f for f in os.listdir(wind_file_paths) if f.endswith('.csv')]
     # 指定风荷载时程数据文件路径，然后循环运行程序
-    wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
-                 "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
-                 "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
-                 "Model2_10yr_045.csv"]
+    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
+    #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
+    #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
+    #              "Model2_10yr_045.csv"]
     
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
     Type = "acceleration" # acceleration or displacement
