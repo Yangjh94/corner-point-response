@@ -137,39 +137,4 @@ class WindAnalysisManager:
         print(f"程序总耗时: {total_time:.2f} 秒 ({total_time/60:.2f} 分钟)")
         print("=" * 80)
     
-    def get_results(self):
-        """获取所有分析结果"""
-        return self.all_results
     
-    def summarize_results(self):
-        """结果统计分析"""
-        import pandas as pd
-        
-        # 提取统计信息
-        summary_data = []
-        for result in self.all_results:
-            summary_data.append({
-                "wind_file": result["wind_file"],
-                "node": result["node"],
-                "time_steps": len(result["times"]),
-                "max_displacement": max(max(map(abs, result["displacements"][0]), default=0),
-                                        max(map(abs, result["displacements"][1]), default=0),
-                                        max(map(abs, result["displacements"][2]), default=0)),
-                "max_acceleration": max(max(map(abs, result["accelerations"][0]), default=0),
-                                        max(map(abs, result["accelerations"][1]), default=0),
-                                        max(map(abs, result["accelerations"][2]), default=0))
-            })
-
-        # 转换为DataFrame并分组统计
-        df_summary = pd.DataFrame(summary_data)
-        grouped_summary = df_summary.groupby("wind_file").agg({
-            "node": "count",
-            "time_steps": "sum",
-            "max_displacement": "max",
-            "max_acceleration": "max"
-        }).reset_index()
-
-        print("\n统计结果表格:")
-        print(grouped_summary)
-        
-        return grouped_summary
