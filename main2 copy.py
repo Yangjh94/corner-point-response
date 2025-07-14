@@ -539,8 +539,8 @@ def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time
         print(f"RZ方向最大旋转: {max(R3, key=abs):.6f} rad")
         
         # 汇总位移结果
-        displacement_results = [U1, U2, U3, R1, R2, R3]
-        print(f"displacement_results的尺寸为: {len(displacement_results[0])}")
+        results = [U1, U2, U3, R1, R2, R3]
+        print(f"displacement_results的尺寸为: {len(results[0])}")
 
         load_history_file = os.path.splitext(load_history_file)[0]
         output_file = os.path.join(output_file,"1-1",Type,load_history_file)
@@ -589,8 +589,8 @@ def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time
         print(f"RZ方向最大加速度: {max(R3, key=abs):.6f} rad")
 
         # 汇总加速度结果
-        acceleration_results = [U1, U2, U3, R1, R2, R3]
-        print(f"acceleration_results的尺寸为: {len(acceleration_results[0])}")
+        results = [U1, U2, U3, R1, R2, R3]
+        print(f"acceleration_results的尺寸为: {len(results[0])}")
 
         load_history_file = os.path.splitext(load_history_file)[0]
         output_file = os.path.join(output_file,"1-1",Type,load_history_file, node_name)
@@ -610,8 +610,8 @@ def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time
         df.to_csv(output_file_with_timestamp, index=False)
         print(f"响应时程已保存至: {output_file_with_timestamp}")
 
-    return time_points, displacement_results, acceleration_results
-        
+    return time_points, results
+
 def create_unique_filename(base_path, type, timestamp=None):
     """
     创建带时间戳的唯一文件名
