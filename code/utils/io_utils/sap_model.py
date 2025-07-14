@@ -417,8 +417,8 @@ class SAP2000Model:
         print(f"风荷载时程曲线添加完成，共添加了 {col_idx} 个荷载")
 
         return col_idx, diaphragm_centers
-    
-    def get_node_response_history(self, node_name, Type, damp, load_case="Wind_time_history", load_history_file=None, output_file=None, timestamp=None):
+
+    def get_node_response_history(self, building_name, node_name, Type, damp, load_case="Wind_time_history", load_history_file=None, output_file=None, timestamp=None):
         """
         获取指定节点在指定荷载工况下的位移响应时程
         
@@ -570,7 +570,7 @@ class SAP2000Model:
             print(f"acceleration_results的尺寸为: {len(results[0])}")
 
             load_history_file = os.path.splitext(load_history_file)[0]
-            output_file = os.path.join(output_file,"1-1",Type,load_history_file, node_name)
+            output_file = os.path.join(output_file,building_name,Type,load_history_file, node_name)
 
         # 如果指定了输出文件，保存结果到CSV
         if output_file:

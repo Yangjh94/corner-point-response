@@ -130,6 +130,7 @@ def main():
 
             # 获取位移响应时程
             times, responses = sapmodel.get_node_response_history(
+                building_name,
                 target_node,
                 Type=Type,
                 damp=damp,
