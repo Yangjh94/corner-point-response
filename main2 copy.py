@@ -14,6 +14,7 @@ from collections import defaultdict # 用于存储楼层信息, 方便创建刚�
 
 # 导入编写的函数工具
 sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
+# Commented out as this import path appears to be invalid
 from utils.io_utils.sap_model import SAP2000Model
 
 # from comtypes import gen  # 用于SAP2000 API的类型定义
@@ -27,89 +28,6 @@ from utils.io_utils.sap_model import SAP2000Model
 #         print(f"错误: 找不到SAP2000类型库文件: {sap2000_tlb_path}")
 #         sys.exit(1)
 # import comtypes.gen.SAP2000v1  # 导入SAP2000的类型定义
-
-def connect_to_sap2000():
-    """
-    连接到当前打开的SAP2000实例
-    
-    返回:
-        成功连接时返回SAP2000模型对象，否则返回None
-    """
-    try:
-        print("尝试连接到SAP2000...")
-        
-        # 创建SAP2000 API帮助对象
-        helper = comtypes.client.CreateObject('SAP2000v1.Helper')
-        helper = helper.QueryInterface(comtypes.gen.SAP2000v1.cHelper)
-        
-        # 获取当前打开的SAP2000实例
-        mySapObject = helper.GetObject("CSI.SAP2000.API.SapObject")
-        if mySapObject is None:
-            print("找不到打开的SAP2000实例，尝试启动新实例...")
-            
-            # 启动新的SAP2000实例
-            mySapObject = helper.CreateObject("CSI.SAP2000.API.SapObject")
-            mySapObject.ApplicationStart()
-            
-        # 获取激活的模型
-        model = mySapObject.SapModel
-        
-        # 检查是否已打开模型
-        file_path = model.GetModelFilename()
-        if not file_path:
-            print("警告: SAP2000中未打开模型。请先打开一个模型文件。")
-        else:    
-            print(f"成功连接到SAP2000！当前模型文件: {file_path}")
-        
-        return model
-    
-    except Exception as e:
-        print(f"连接到SAP2000时出错: {e}")
-        return None
-
-def get_model_info(model):
-    """
-    获取并打印SAP2000模型的详细信息
-    
-    参数:
-        model: SAP2000模型对象
-    """
-    try:
-        print("\n" + "=" * 40)
-        print("SAP2000模型详细信息:")
-        print("=" * 40)
-        
-        # 获取所有节点信息
-        _, point_names, _, _, _, _, _ = model.PointObj.GetAllPoints()
-        print(f"\n节点总数: {len(point_names)}")
-        print(f"前10个节点: {point_names[:10] if len(point_names) > 10 else point_names}")
-        
-        # 获取所有框架元素信息
-        _, frame_names, _, _, _ = model.FrameObj.GetAllFrames()
-        print(f"\n框架元素总数: {len(frame_names)}")
-        print(f"前10个框架元素: {frame_names[:10] if len(frame_names) > 10 else frame_names}")
-        
-        # 获取所有载荷模式
-        _, load_patterns = model.LoadPatterns.GetNameList()
-        print(f"\n载荷模式总数: {len(load_patterns)}")
-        print(f"载荷模式: {load_patterns}")
-        
-        # 获取所有载荷组合
-        _, load_combos = model.RespCombo.GetNameList()
-        print(f"\n载荷组合总数: {len(load_combos)}")
-        print(f"载荷组合: {load_combos}")
-        
-        # 获取所有隔板信息
-        _, diaphragm_names = model.AreaObj.GetNameListDiaphragm()
-        print(f"\n隔板总数: {len(diaphragm_names)}")
-        print(f"隔板: {diaphragm_names}")
-        
-        print("\n" + "=" * 40)
-        
-        return True
-    except Exception as e:
-        print(f"获取模型信息时出错: {e}")
-        return False
     
 def get_timestamp():
     """
@@ -684,6 +602,7 @@ def summarize_results(all_results):
     return grouped_summary
 
 def main():
+    building_name = "1-1"  # 模型名称
     target_elevations = [6000, 10500, 15000, 19500, 23100, 26700, 30300, 33900, 37500, 41100, 44700, 48300, 51900, 55500, 
                          59100, 62700, 66300, 69900, 73500, 77100, 80700, 84300, 87900, 91500, 95100, 98700, 102300, 
                          105900, 109500, 113100, 116700, 120300, 123900, 127500, 131100, 134700, 138300, 141900, 145500, 
@@ -698,6 +617,7 @@ def main():
                  "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
                  "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
                  "Model2_10yr_045.csv"]
+    
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
     Type = "acceleration" # acceleration or displacement
     damp = 0.02 # 阻尼比
@@ -711,8 +631,12 @@ def main():
     print(f"程序开始时间: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 80)
     
+    # [1] 连接到SAP2000实例
+    sapmodel = SAP2000Model()
+    sapmodel.connect()
+
     # 连接到当前打开的SAP2000实例
-    model = connect_to_sap2000()
+    model = sapmodel.model
     if model is None:
         print("无法连接到SAP2000，程序终止")
         return
@@ -748,7 +672,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=33000,
+                                                                        num_rows=33,
                                                                         damp = damp)
         
         if wind_load_count > 0:

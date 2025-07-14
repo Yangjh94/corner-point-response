@@ -174,10 +174,13 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-
+1-1model/
 1-1model2/
-1-1model3/
+2-1model/
+3-1model/
 data/rew/1-1model2/
 data/rew/1-1model3/
+data/rew/2-1model/
+data/rew/3-1model/
 
 
