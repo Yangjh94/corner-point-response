@@ -80,7 +80,7 @@ def main():
 
     # 初始化结果存储列表
     all_results = []
-    for wind_file_name in wind_file[7:]:
+    for wind_file_name in wind_file[:7]:
         # 解锁模型，以便修改荷载
         model.SetModelIsLocked(False)
         wind_file_path = os.path.join(wind_file_paths, wind_file_name)
