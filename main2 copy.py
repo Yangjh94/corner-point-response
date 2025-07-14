@@ -749,7 +749,7 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=33,
+                                                                        num_rows=33000,
                                                                         damp = damp)
         
         if wind_load_count > 0:
