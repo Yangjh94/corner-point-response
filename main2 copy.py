@@ -527,11 +527,6 @@ def main():
     wind_file_paths = os.path.join(script_dir, wind_load_filepath)
     # 获取文件夹下的风荷载时程数据文件
     wind_file = [f for f in os.listdir(wind_file_paths) if f.endswith('.csv')]
-    # 指定风荷载时程数据文件路径，然后循环运行程序
-    # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv", "Model2_10yr_010.csv",
-    #              "Model2_10yr_015.csv", "Model2_10yr_020.csv", "Model2_10yr_025.csv",
-    #              "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
-    #              "Model2_10yr_045.csv"]
     
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
     Type = "acceleration" # acceleration or displacement
@@ -586,7 +581,7 @@ def main():
             diaphragm_constraints,
             node_z_coords,
             wind_time_history_file=wind_file_path,
-            num_rows=33,
+            num_rows=33000,
             damp=damp
         )
         
