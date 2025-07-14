@@ -410,6 +410,8 @@ class SAP2000Model:
             angles
         )
 
+        # 获取工况的状态
+        # ret = self.model.
         # 设置运行工况
         ret = self.model.Analyze.SetRunCaseFlag(unified_case_name, True)
         print(f"风荷载时程曲线添加完成，共添加了 {col_idx} 个荷载")

@@ -17,9 +17,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
 # Commented out as this import path appears to be invalid
 from utils.io_utils.sap_model import SAP2000Model
 
-
 def main():
-    building_name = "1-1"  # 模型名称
+    building_name = "2-1"  # 模型名称
     target_elevations = [6000, 10500, 15000, 19500, 23100, 26700, 30300, 33900, 37500, 41100, 44700, 48300, 51900, 55500, 
                          59100, 62700, 66300, 69900, 73500, 77100, 80700, 84300, 87900, 91500, 95100, 98700, 102300, 
                          105900, 109500, 113100, 116700, 120300, 123900, 127500, 131100, 134700, 138300, 141900, 145500, 
@@ -112,9 +111,13 @@ def main():
         top_diaphragm_center_name = max(diaphragm_centers.keys(), key=lambda x: float(x.split('_')[-1]))
         print(f"最高楼层的隔板名称: {top_diaphragm_center_name}")
         node_top_center_name = diaphragm_centers[top_diaphragm_center_name]["point_name"]
-
-        target_nodes = [node_top_center_name, "54000062", "54000070", "54000071", "54000079"]  # 示例节点名称列表
-
+        if building_name == "1-1":
+            target_nodes = [node_top_center_name, "54000062", "54000070", "54000071", "54000079"]
+        elif building_name == "2-1":
+            target_nodes = [node_top_center_name, "54000050", "54000059", "54000047", "54000058"]
+        elif building_name == "3-1":
+            target_nodes = [node_top_center_name, "54000060", "54000067", "54000059", "54000066"]
+        
         # 在输出文件时包含 wind_file_path 中的文件名部分
         wind_file_name = os.path.basename(wind_file_path)
         results_dir = "data\\output\\Timehistory_modal"
