@@ -13,8 +13,8 @@ from datetime import datetime
 from collections import defaultdict # 用于存储楼层信息, 方便创建刚性隔板
 
 # 导入编写的函数工具
-# sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
-# from utils.io_utils.sap_model import SAP2000Model
+sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
+from utils.io_utils.sap_model import SAP2000Model
 
 # from comtypes import gen  # 用于SAP2000 API的类型定义
 # # 确保comtypes可以找到SAP2000的类型库
@@ -195,7 +195,7 @@ def add_diaphragms(model, target_elevations=None, tolerance=0.01):
         traceback.print_exc()
         return []
 
-def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=None,num_rows=None):
+def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind_time_history_file=None,num_rows=None,damp=None):
     """
     在每个刚性隔板的中心点添加风荷载时程曲线
     
@@ -295,7 +295,7 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     ret = model.LoadCases.ModHistLinear.SetModalCase(unified_case_name, "MODAL")  # 指定模态分析工况
     # ret = model.LoadCases.ModHistLinear.SetNumberModes(unified_case_name, 30)  # 使用前30阶模态
     ret = model.LoadCases.ModHistLinear.SetTimeStep(unified_case_name, num_rows, 1/fs)
-    ret = model.LoadCases.ModHistLinear.SetDampConstant(unified_case_name, 0.02)  # 设置2%的阻尼比
+    ret = model.LoadCases.ModHistLinear.SetDampConstant(unified_case_name, damp)  # 设置2%的阻尼比
     print(f"创建模态时程分析工况: {unified_case_name}")
 
     # 删除可能存在的旧荷载模式和时程函数
@@ -337,8 +337,6 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     # 步骤5：为每个隔板中心添加风荷载
     col_idx = 0
     # 创建响应组合
-    # ret = model.RespCombo.Delete("Combo2")
-    # ret = model.RespCombo.Add("Combo2", 0)
     for constraint_name, center_info in diaphragm_centers.items():
         point_name = center_info["point_name"]
         
@@ -442,8 +440,8 @@ def add_wind_time_history_load(model, diaphragm_constraints, node_z_coords, wind
     print(f"风荷载时程曲线添加完成，共添加了 {col_idx} 个荷载")
 
     return col_idx, diaphragm_centers
-        
-def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time_history", output_file=None, timestamp=None):
+
+def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time_history", load_history_file=None, output_file=None, timestamp=None):
     """
     获取指定节点在指定荷载工况下的位移响应时程
     
@@ -480,145 +478,140 @@ def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time
         
     num_steps = ret[0]
     time_step = ret[1]
+    time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
     print(f"时程分析包含 {num_steps} 个时间步，步长为 {time_step} 秒")
 
     ret = model.Results.Setup.DeselectAllCasesAndCombosForOutput()
     ret = model.Results.Setup.SetCaseSelectedForOutput(load_case)
     ret = model.Results.Setup.SetOptionModalHist(2)  # 使用绝对值输出
-
-    # 获取位移结果（注意正确的方法名）
-    GroupElm = 0
-    NumberResults = 0
-    Obj = []
-    Elm = []
-    LoadCase = [load_case]  # 空列表，让函数填充
-    StepType = []  # 空列表，让函数填充
-    StepNum = []   # 空列表，让函数填充
-    U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
-
-    # 正确的调用方式，接收所有返回值
-    [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = model.Results.JointDispl(
-        node_name, 
-        GroupElm,  # 使用0表示按对象获取结果
-        NumberResults, 
-        Obj, 
-        Elm, 
-        LoadCase,
-        StepType, 
-        StepNum,
-        U1, U2, U3, R1, R2, R3 
-    )
-
-    ux_list = U1  # X方向位移
-    uy_list = U2  # Y方向位移
-    uz_list = U3  # Z方向位移
-    rx_list = R1  # X方向旋转
-    ry_list = R2  # Y方向旋转
-    rz_list = R3  # Z方向旋转
-
-    # 创建位移DataFrame
-    df_disp = pd.DataFrame({
-        # "time":time_points,
-        "UX": U1,
-        "UY": U2,
-        "UZ": U3,
-        "RX": R1,
-        "RY": R2,
-        "RZ": R3
-    })
-
-    # 输出简单统计信息
-    print(f"获取节点 {node_name} 的位移响应时程成功！")
-    print(f"当前荷载工况为: {load_case}")
-    print(f"当前NumberResults为: {NumberResults}")
-    # print(f"当前Obj为: {Obj}")
-    # print(f"当前Elm为: {Elm}")
-    # print(f"当前ACase为: {ACase}")
-    # print(f"当前StepType为: {StepType}")
-    # print(f"当前StepNum为: {StepNum}")
-
-    print("\n位移响应统计:")
-    print(f"X方向最大位移: {max(ux_list, key=abs):.6f} mm")
-    print(f"Y方向最大位移: {max(uy_list, key=abs):.6f} mm")
-    print(f"Z方向最大位移: {max(rz_list, key=abs):.6f} mm")
     
-    # 汇总位移结果
-    displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
-    time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
-    print(f"displacement_results的尺寸为: {len(displacement_results[0])}")
+    if Type == "displacement":
+        # 获取位移结果（注意正确的方法名）
+        GroupElm = 0
+        NumberResults = 0
+        Obj = []
+        Elm = []
+        LoadCase = [load_case]  # 空列表，让函数填充
+        StepType = []  # 空列表，让函数填充
+        StepNum = []   # 空列表，让函数填充
+        U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
 
-    # 获取节点加速度
-    GroupElm = 0
-    NumberResults = 0
-    Obj = []
-    Elm = []
-    LoadCase = [load_case]
-    StepType = []
-    StepNum = []
-    U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
-    
-    [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = model.Results.JointAccAbs(
+        # 正确的调用方式，接收所有返回值
+        [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = model.Results.JointDispl(
             node_name, 
-            GroupElm, 
+            GroupElm,  # 使用0表示按对象获取结果
             NumberResults, 
             Obj, 
             Elm, 
-            LoadCase, 
+            LoadCase,
             StepType, 
             StepNum,
             U1, U2, U3, R1, R2, R3 
         )
-    
-    ux_list = U1  # X方向加速度
-    uy_list = U2  # Y方向加速度
-    uz_list = U3  # Z方向加速度
-    rx_list = R1  # X方向加速度
-    ry_list = R2  # Y方向加速度
-    rz_list = R3  # Z方向加速度
 
-    # 创建加速度DataFrame
-    df_acc = pd.DataFrame({
-        # "time":time_points,
-        "UX": ux_list,
-        "UY": uy_list,
-        "UZ": uz_list,
-        "RX": rx_list,
-        "RY": ry_list,
-        "RZ": rz_list
-    })
-    
-    # 输出简单统计信息
-    print("\n加速度响应统计:")
-    print(f"X方向最大加速度: {max(ux_list, key=abs):.6f} mm")
-    print(f"Y方向最大加速度: {max(uy_list, key=abs):.6f} mm")
-    print(f"Z方向最大加速度: {max(rz_list, key=abs):.6f} mm")
+        # 创建位移DataFrame
+        df = pd.DataFrame({
+            # "time":time_points,
+            "UX": U1,
+            "UY": U2,
+            "UZ": U3,
+            "RX": R1,
+            "RY": R2,
+            "RZ": R3
+        })
 
-    # 汇总加速度结果
-    acceleration_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
-    print(f"acceleration_results的尺寸为: {len(acceleration_results[0])}")
+        # 输出简单统计信息
+        print(f"获取节点 {node_name} 的位移响应时程成功！")
+        print(f"当前荷载工况为: {load_case}")
+        print(f"当前NumberResults为: {NumberResults}")
+        # print(f"当前Obj为: {Obj}")
+        # print(f"当前Elm为: {Elm}")
+        # print(f"当前ACase为: {ACase}")
+        # print(f"当前StepType为: {StepType}")
+        # print(f"当前StepNum为: {StepNum}")
+
+        print("\n位移响应统计:")
+        print(f"X方向最大位移: {max(U1, key=abs):.6f} mm")
+        print(f"Y方向最大位移: {max(U2, key=abs):.6f} mm")
+        print(f"Z方向最大位移: {max(U3, key=abs):.6f} mm")
+        print(f"RX方向最大旋转: {max(R1, key=abs):.6f} rad")
+        print(f"RY方向最大旋转: {max(R2, key=abs):.6f} rad")
+        print(f"RZ方向最大旋转: {max(R3, key=abs):.6f} rad")
+        
+        # 汇总位移结果
+        displacement_results = [U1, U2, U3, R1, R2, R3]
+        print(f"displacement_results的尺寸为: {len(displacement_results[0])}")
+
+        load_history_file = os.path.splitext(load_history_file)[0]
+        output_file = os.path.join(output_file,"1-1",Type,load_history_file)
+
+    elif Type == "acceleration":
+        # 获取节点加速度
+        GroupElm = 0
+        NumberResults = 0
+        Obj = []
+        Elm = []
+        LoadCase = [load_case]
+        StepType = []
+        StepNum = []
+        U1, U2, U3, R1, R2, R3 = [], [], [], [], [], []
+        
+        [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = model.Results.JointAccAbs(
+                node_name, 
+                GroupElm, 
+                NumberResults, 
+                Obj, 
+                Elm, 
+                LoadCase, 
+                StepType, 
+                StepNum,
+                U1, U2, U3, R1, R2, R3 
+            )
+
+        # 创建加速度DataFrame
+        df = pd.DataFrame({
+            # "time":time_points,
+            "UX": U1,
+            "UY": U2,
+            "UZ": U3,
+            "RX": R1,
+            "RY": R2,
+            "RZ": R3
+        })
+        
+        # 输出简单统计信息
+        print("\n加速度响应统计:")
+        print(f"X方向最大加速度: {max(U1, key=abs):.6f} mm")
+        print(f"Y方向最大加速度: {max(U2, key=abs):.6f} mm")
+        print(f"Z方向最大加速度: {max(U3, key=abs):.6f} mm")
+        print(f"RX方向最大加速度: {max(R1, key=abs):.6f} rad")
+        print(f"RY方向最大加速度: {max(R2, key=abs):.6f} rad")
+        print(f"RZ方向最大加速度: {max(R3, key=abs):.6f} rad")
+
+        # 汇总加速度结果
+        acceleration_results = [U1, U2, U3, R1, R2, R3]
+        print(f"acceleration_results的尺寸为: {len(acceleration_results[0])}")
+
+        load_history_file = os.path.splitext(load_history_file)[0]
+        output_file = os.path.join(output_file,"1-1",Type,load_history_file, node_name)
 
     # 如果指定了输出文件，保存结果到CSV
     if output_file:
         # 创建带时间戳的文件名
         timestamp = get_timestamp()
-        output_disp_file_with_timestamp = create_unique_filename(output_file, "disp", timestamp)
-        output_acce_file_with_timestamp = create_unique_filename(output_file, "acce", timestamp)
+        output_file_with_timestamp = create_unique_filename(output_file, Type, timestamp)
 
         # 确保输出目录存在
-        output_dir = os.path.dirname(output_disp_file_with_timestamp) # 获取输出文件的目录
+        output_dir = os.path.dirname(output_file_with_timestamp) # 获取输出文件的目录
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         # 保存到CSV文件
-        df_disp.to_csv(output_disp_file_with_timestamp, index=False)
-        print(f"位移响应时程已保存至: {output_disp_file_with_timestamp}")
-
-        df_acc.to_csv(output_acce_file_with_timestamp, index=False)
-        print(f"加速度响应时程已保存至: {output_acce_file_with_timestamp}")
+        df.to_csv(output_file_with_timestamp, index=False)
+        print(f"响应时程已保存至: {output_file_with_timestamp}")
 
     return time_points, displacement_results, acceleration_results
         
-
 def create_unique_filename(base_path, type, timestamp=None):
     """
     创建带时间戳的唯一文件名
@@ -640,13 +633,11 @@ def create_unique_filename(base_path, type, timestamp=None):
     # 如果base_path包含扩展名，分离出来
     if '.' in filename:
         name_part, ext_part = os.path.splitext(filename)
-        # extension = ext_part
     else:
         name_part = filename
 
     # 创建带时间戳的文件名：文件名_时间戳
-    # timestamped_filename = f"{timestamp}_{name_part}_{type}{ext_part}"
-    timestamped_filename = f"{timestamp}_{name_part}_{type}{ext_part}"
+    timestamped_filename = f"{timestamp}_{name_part}_{type}"
 
     return os.path.join(directory, timestamped_filename)
 
@@ -660,7 +651,6 @@ def summarize_results(all_results):
     返回:
         pandas.DataFrame 表格，包含 wind_file 的统计信息
     """
-    import pandas as pd
 
     # 提取 wind_file 和节点信息
     summary_data = []
@@ -710,6 +700,8 @@ def main():
                  "Model2_10yr_030.csv", "Model2_10yr_035.csv", "Model2_10yr_040.csv",
                  "Model2_10yr_045.csv"]
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
+    Type = "acceleration" # acceleration or displacement
+    damp = 0.02 # 阻尼比
 
     # 记录程序开始时间
     start_time = time.time() # 记录开始时间
@@ -757,7 +749,9 @@ def main():
                                                                         diaphragm_constraints, 
                                                                         node_z_coords, 
                                                                         wind_time_history_file=wind_file_path, 
-                                                                        num_rows=33000)
+                                                                        num_rows=33,
+                                                                        damp = damp)
+        
         if wind_load_count > 0:
             print(f"成功添加 {wind_load_count} 个风荷载时程曲线")
         else:
@@ -783,42 +777,28 @@ def main():
 
         # 在输出文件时包含 wind_file_path 中的文件名部分
         wind_file_name = os.path.basename(wind_file_path)
-        wind_file_base_name = os.path.splitext(wind_file_name)[0]
         results_dir = "data\\output\\Timehistory_modal"
-        results_dir = os.path.join(script_dir, results_dir,f"{wind_file_base_name}") # 确保结果目录存在
+        output_path = os.path.join(script_dir, results_dir)
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
         for target_node in target_nodes:
-            print(f"\n获取节点 {target_node} 的位移和加速度响应...")
-
-            output_path = os.path.join(results_dir, f"{target_node}.csv")
+            print(f"获取节点 {target_node} 的位移和加速度响应...")
 
             # 获取位移响应时程
-            times, displacements, accelerations = get_node_response_history(
+            times, responses = get_node_response_history(
                 model,
                 target_node,
-                Type = "acceleration",
-                damp = 0.02,
-                load_case="Wind_time_history", 
-                output_file=output_path
+                Type = Type,
+                damp = damp,
+                load_case = "Wind_time_history",
+                load_history_file = wind_file_name,
+                output_file = output_path
             )
-            if times and displacements and accelerations:
+            if times and responses:
                 print(f"成功获取顶层角点 {target_node} 的 {len(times)} 个时间步的位移数据")
             else:
                 print("获取位移响应失败")
-
-            # 可以在此处将本次计算得到的加速度和位移结果保存到一个变量中，方便后续可视化展示
-            all_results.append({
-                "wind_file": wind_file_name,
-                "node": target_node,
-                "times": times,
-                "displacements": displacements,
-                "accelerations": accelerations
-            })
-    
-    # [6] 结果统计分析
-    # summary_table = summarize_results(all_results)
 
     # 计算程序总耗时
     end_time = time.time()
