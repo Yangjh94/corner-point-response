@@ -546,7 +546,6 @@ def get_node_response_history(model, node_name, Type, damp, load_case="Wind_time
     displacement_results = [ux_list, uy_list, uz_list, rx_list, ry_list, rz_list]
     time_points = [i * time_step for i in range(num_steps+1)]  # 生成时间点列表
     print(f"displacement_results的尺寸为: {len(displacement_results[0])}")
-    print(f"time_points的尺寸为: {len(time_points)}")
 
     # 获取节点加速度
     GroupElm = 0
