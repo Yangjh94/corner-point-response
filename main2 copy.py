@@ -79,7 +79,7 @@ def main():
 
     # 初始化结果存储列表
     all_results = []
-    for wind_file_name in wind_file:
+    for wind_file_name in wind_file:  # 从第8个文件开始处理
         # 解锁模型，以便修改荷载
         SapModel.model.SetModelIsLocked(False)
         wind_file_path = os.path.join(wind_file_paths, wind_file_name)
