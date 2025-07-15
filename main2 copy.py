@@ -14,7 +14,6 @@ from collections import defaultdict # 用于存储楼层信息, 方便创建刚�
 
 # 导入编写的函数工具
 sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
-# Commented out as this import path appears to be invalid
 from utils.io_utils.sap_model import SAP2000Model
 
 def main():

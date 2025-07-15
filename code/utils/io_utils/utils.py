@@ -5,6 +5,7 @@
 
 import os
 from datetime import datetime
+import numpy as np
 
 def get_timestamp():
     """
@@ -43,3 +44,18 @@ def create_unique_filename(base_path, type, timestamp=None):
 
     return os.path.join(directory, timestamped_filename)
 
+def g_D(response_data, dt, tao=600, gama=0.5772):
+    """求解Davenport峰值因子"""
+    response_data = np.array(response_data)
+    std_q = np.std(response_data)
+    
+    # 计算一阶导数
+    response_dot = np.gradient(response_data, dt)
+    std_q_dian = np.std(response_dot)
+    
+    # 计算零穿越率和峰值因子
+    v0i = std_q_dian / (2 * np.pi * std_q)
+    k = np.sqrt(2 * np.log(v0i * tao))
+    gi = k + gama / k
+    
+    return gi

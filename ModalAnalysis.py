@@ -23,8 +23,8 @@ def main():
     SapModel = SAP2000Model(building_name)
     # 连接到SAP2000
     SapModel.connect()
-    ret = SapModel.Analyze.SetRunCaseFlag("MODAL", True)
-    ret = SapModel.Analyze.RunAnalysis()
+    ret = SapModel.model.Analyze.SetRunCaseFlag("MODAL", True)
+    ret = SapModel.model.Analyze.RunAnalysis()
 
     # 获取模型的所有节点坐标信息
     node_coords, diaphragm_constraint_coords = SapModel.get_node_coordinates()
@@ -70,7 +70,9 @@ def main():
     # 直接保存每层质量信息到CSV文件
     df_floor_masses = pd.DataFrame.from_dict(Floor_Masses, orient='index', columns=["MASS_X", "MASS_Y", "MASS_Z", "MASS_R1", "MASS_R2", "MASS_R3"])
     df_floor_masses.index.name = 'FLOOR_LEVEL'
-    df_floor_masses.to_csv("Floor_Masses.csv")
+
+    output_dir = os.path.join("data", "output", "parameters", building_name)
+    df_floor_masses.to_csv(os.path.join(output_dir, "Floor_Masses.csv"))
 
     modal_periods, modal_freqs, df_shapes = SapModel.get_modal_results(number_modes)
     # df_shapes.to_csv("modal_shapes.csv", index=False)
@@ -134,8 +136,8 @@ def main():
     print(modal_matrix_df.iloc[:5, :5])
     
     # 保存到CSV文件
-    modal_matrix_df.to_csv("modal_matrix.csv", index=False)
-    print(f"\n模态矩阵已保存到: modal_matrix.csv")
+    modal_matrix_df.to_csv(os.path.join(output_dir, "modal_matrix.csv"), index=False)
+    print(f"\n模态矩阵已保存到: {os.path.join(output_dir, 'modal_matrix.csv')}")
 
 if __name__ == "__main__":
     main()
