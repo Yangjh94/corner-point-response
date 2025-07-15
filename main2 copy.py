@@ -18,7 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
 from utils.io_utils.sap_model import SAP2000Model
 
 def main():
-    building_name = "2-1"  # 模型名称
+    building_name = input("请输入模型名称（例如：3-1）: ").strip()  # 模型名称,
     number_modes = 15  # 模态数
     target_elevations = [6000, 10500, 15000, 19500, 23100, 26700, 30300, 33900, 37500, 41100, 44700, 48300, 51900, 55500, 
                          59100, 62700, 66300, 69900, 73500, 77100, 80700, 84300, 87900, 91500, 95100, 98700, 102300, 
@@ -49,7 +49,7 @@ def main():
     print("=" * 80)
     
     # [1] 连接到SAP2000实例
-    sapmodel = SAP2000Model()
+    sapmodel = SAP2000Model(building_name)
     sapmodel.connect()
 
     # 连接到当前打开的SAP2000实例

@@ -12,10 +12,11 @@ from .utils import get_timestamp, create_unique_filename
 class SAP2000Model:
     """SAP2000模型管理器 - 负责所有SAP2000操作"""
     
-    def __init__(self):
+    def __init__(self, building_name):
         self.model = None
         self.is_connected = False
-    
+        self.building_name = building_name
+
     def connect(self):
         """连接到SAP2000 - 您的原始connect_to_sap2000代码"""
         try:
@@ -141,9 +142,11 @@ class SAP2000Model:
 
             # 保存节点信息到CVS文件
             df = pd.DataFrame(node_info)
-            csv_path = os.path.join(os.getcwd(), "node_coordinates.csv")
+            csv_path = os.path.join(os.getcwd(), "data", "output", "parameter",self.building_name, "node_coordinates.csv")
+            if not os.path.exists(os.path.dirname(csv_path)):
+                os.makedirs(os.path.dirname(csv_path))
             df.to_csv(csv_path, index=False)
-            print(f"节点坐标已保存到: {csv_path}")            
+            print(f"节点坐标已保存到: {csv_path}") 
             # 为每一组节点设置刚性隔板约束
             print(f"将为以下Z坐标创建刚性隔板约束: {list(node_z_coords.keys())[0:5]} 等 {len(node_z_coords)} 个")
 
