@@ -597,3 +597,188 @@ class SAP2000Model:
             print(f"响应时程已保存至: {output_file_with_timestamp}")
 
         return time_points, results
+    
+    def get_modal_results(self, num_modes=15, group_name="ALL"):
+        """
+        获取SAP2000模型的模态频率、周期和所有节点振型（模态位移）
+        返回：
+            modal_periods: 周期列表
+            modal_freqs: 频率列表
+            df_shapes: DataFrame，包含所有节点的振型数据
+        """
+        # 1. 获取模态周期和频率
+        self.model.Results.Setup.DeselectAllCasesAndCombosForOutput()
+        self.model.Results.Setup.SetCaseSelectedForOutput("MODAL")
+
+        NumberResults = 0
+        LoadCase = []
+        StepType = []
+        StepNum = []
+        Period = []
+        Frequency = []
+        CircFreq = []
+        EigenValue = []
+
+        ret = self.model.Results.ModalPeriod(NumberResults, LoadCase, StepType, StepNum, Period, Frequency, CircFreq, EigenValue)
+        if ret[-1] != 0:
+            print(f"获取模态分析结果失败，错误码: {ret}")
+            return None, None, None
+        NumberResults = ret[0]
+        LoadCase = ret[1]
+        StepType = ret[2]
+        StepNum = ret[3]
+        Period = ret[4]
+        Frequency = ret[5]
+        CircFreq = ret[6]
+        EigenValue = ret[7]
+
+        modal_periods = []
+        modal_freqs = []
+        # =============================打印信息================================
+        # print(f"模态分析结果: 共 {len(Period)} 个模态")
+        # for i in range(min(num_modes, len(Period))):
+        #     modal_periods.append(Period[i])
+        #     modal_freqs.append(Frequency[i])
+        #     print(f"模态 {i+1}: 周期 = {Period[i]:.6f} 秒, 频率 = {Frequency[i]:.6f} Hz")
+
+        # 2. 获取所有节点的振型（模态位移）
+        # eItemTypeElm 枚举，GroupElm=2
+        GroupElm = 2
+        NumberResults2 = 0
+        Obj = []
+        Elm = []
+        LoadCase2 = []
+        StepType2 = []
+        StepNum2 = []
+        U1 = []
+        U2 = []
+        U3 = []
+        R1 = []
+        R2 = []
+        R3 = []
+
+        ret = self.model.Results.Setup.DeselectAllCasesAndCombosForOutput()
+        ret = self.model.Results.Setup.SetCaseSelectedForOutput("MODAL")
+
+        ret2 = self.model.Results.ModeShape(group_name, GroupElm, NumberResults2, Obj, Elm, LoadCase2, StepType2, StepNum2, U1, U2, U3, R1, R2, R3)
+        print("ret2的长度为:", len(ret2))
+        # print(f"ret2的关键字：{ret2[1]}...")  # 打印前10个字符
+        print(f"ret2的类型为: {type(ret2)}")
+        if ret2[-1] != 0:
+            print(f"获取振型结果失败，错误码: {ret2}")
+            return modal_periods, modal_freqs, None
+        
+        NumberResults2 = ret2[0]
+        Obj = ret2[1]
+        Elm = ret2[2]
+        LoadCase2 = ret2[3]
+        StepType2 = ret2[4]
+        StepNum2 = ret2[5]
+        U1 = ret2[6]
+        U2 = ret2[7]
+        U3 = ret2[8]
+        R1 = ret2[9]
+        R2 = ret2[10]
+        R3 = ret2[11]
+        temp = ret2[12]  # 可能是多余的返回值，通常为0或None
+        print(f"获取模态振型数据成功，共 {NumberResults2} 个节点的振型数据。")
+
+        df_shapes = pd.DataFrame({
+            "Obj": Obj,
+            "Elm": Elm,
+            "LoadCase": LoadCase2,
+            "StepType": StepType2,
+            "ModeNum": StepNum2,
+            "U1": U1,
+            "U2": U2,
+            "U3": U3,
+            "R1": R1,
+            "R2": R2,
+            "R3": R3,
+            "temp": temp  # 如果U12是多余的，可以删除这一列
+        })
+        print(f"已获取{len(df_shapes)}个节点的振型数据。前5行：")
+        print(df_shapes.head())
+        
+        return modal_periods, modal_freqs, df_shapes
+
+    def get_node_mass(self, node_names="ALL"):
+        """
+        获取节点的质量信息，如果 node_names 为 "ALL"，则获取所有节点的质量。
+        参数:
+            model: SAP2000模型对象
+            node_names: 节点名称列表，默认为"ALL"表示获取所有节点的质量信息
+
+        返回:
+            mass_info: 包含节点名称和对应质量的字典
+        """
+        mass_info = {}
+        # 获取所有节点的质量
+        m = [1, 1, 1, 1, 1, 1]  # 获取质量的参数，1表示获取所有质量分量
+
+        if node_names == "ALL":
+            ret = self.model.PointObj.GetNameList()
+            if ret[-1] != 0:
+                print(f"获取所有节点名称失败，错误代码: {ret[-1]}")
+                return mass_info
+
+            # number_points = ret[0]
+            # print(f"模型中共有 {number_points} 个节点")
+            point_names = ret[1]
+
+            for point_name in point_names:
+                # 调用GetMass方法获取所有节点的质量
+                ret = self.model.PointObj.GetMass(point_name, m)
+                if ret[-1] != 0:
+                    print(f"获取节点 {point_name} 的质量失败，错误代码: {ret[-1]}")
+                    continue
+                masses = ret[0]
+                mass_info[point_name] = masses
+
+        return mass_info
+
+    def get_node_coordinates(self, node_names="ALL"):
+        """
+        获取SAP2000模型的节点坐标信息,如果 node_names 为 "ALL"，则获取所有节点的坐标。
+        参数:
+            model: SAP2000模型对象
+            node_names: 节点名称列表，默认为"ALL"表示获取所有节点的坐标
+        返回：
+            node_coords: 节点坐标的字典，包含节点ID和对应的坐标（x, y, z）
+        """
+        node_coords = {}
+        if node_names == "ALL":
+            # 获取所有节点的ID
+            ret = self.model.PointObj.GetNameList()
+            if ret[-1] != 0:
+                print(f"获取节点列表失败，错误代码: {ret[-1]}")
+                return node_coords
+
+            number_points = ret[0]
+            print(f"模型中共有 {number_points} 个节点")
+            point_names = ret[1]
+
+            for point_name in point_names:
+                # 获取每个节点的坐标
+                ret = self.model.PointObj.GetCoordCartesian(point_name)
+                if ret[-1] != 0:
+                    print(f"获取节点 {point_name} 的坐标失败，错误代码: {ret[-1]}")
+                    continue
+                x, y, z = ret[0], ret[1], ret[2]
+                node_coords[point_name] = (x, y, z)
+
+        # 获取刚性隔板约束中心节点名称
+        ret = self.model.ConstraintDef.GetNameList()
+        if ret[-1] == 0:
+            print(f"获取刚性隔板约束中心节点名称成功，共{ret[0]}个约束")
+            constraint_names_list = ret[1]  # 这是一个元组，包含约束名称
+            diaphragm_constraint_coords = {}  # 创建一个新的字典来存储坐标
+            # 遍历所有刚性隔板约束中心，获取他们的坐标
+            for constraint_name in constraint_names_list:
+                # 获取坐标
+                ret = self.model.PointObj.GetCoordCartesian(constraint_name)
+                x, y, z = ret[0], ret[1], ret[2]
+                diaphragm_constraint_coords[constraint_name] = (x, y, z)  # 使用新的字典
+                # print(f"刚性隔板约束 {constraint_name} 的中心坐标为: ({x:.3f}, {y:.3f}, {z:.3f})")
+
+        return node_coords, diaphragm_constraint_coords
