@@ -170,7 +170,7 @@ class SAP2000Model:
             traceback.print_exc()
             return []
     
-    def add_wind_time_history_load(self, diaphragm_constraints, node_z_coords, wind_time_history_file=None,num_rows=None,damp=None):
+    def add_wind_time_history_load(self, number_modes, diaphragm_constraints, node_z_coords, wind_time_history_file=None,num_rows=None,damp=None):
         """
         在每个刚性隔板的中心点添加风荷载时程曲线
         
@@ -258,7 +258,7 @@ class SAP2000Model:
         print("创建模态分析工况...")
         # ret = self.model.LoadCases.Delete("MODAL")  # 先删除可能存在的旧模态工况
         ret = self.model.LoadCases.ModalEigen.SetCase("MODAL")
-        ret = self.model.LoadCases.ModalEigen.SetNumberModes("MODAL", 30, 1)  # 设置计算前30阶模态
+        ret = self.model.LoadCases.ModalEigen.SetNumberModes("MODAL", number_modes, 1)  # 设置计算前30阶模态
         ret = self.model.LoadCases.ModalEigen.SetParameters("MODAL", 0, 0, 1E-10, 1)
 
         unified_case_name = "Wind_time_history"

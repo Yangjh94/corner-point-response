@@ -19,6 +19,7 @@ from utils.io_utils.sap_model import SAP2000Model
 
 def main():
     building_name = "2-1"  # 模型名称
+    number_modes = 15  # 模态数
     target_elevations = [6000, 10500, 15000, 19500, 23100, 26700, 30300, 33900, 37500, 41100, 44700, 48300, 51900, 55500, 
                          59100, 62700, 66300, 69900, 73500, 77100, 80700, 84300, 87900, 91500, 95100, 98700, 102300, 
                          105900, 109500, 113100, 116700, 120300, 123900, 127500, 131100, 134700, 138300, 141900, 145500, 
@@ -84,6 +85,7 @@ def main():
         model.SetModelIsLocked(False)
         wind_file_path = os.path.join(wind_file_paths, wind_file_name)
         wind_load_count, diaphragm_centers = sapmodel.add_wind_time_history_load(
+            number_modes,
             diaphragm_constraints,
             node_z_coords,
             wind_time_history_file=wind_file_path,
