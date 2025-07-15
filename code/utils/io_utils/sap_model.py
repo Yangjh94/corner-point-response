@@ -221,7 +221,7 @@ class SAP2000Model:
             center_point_name = f"WIND_CENTER_{constraint_name}"
             
             # 检查是否需要创建新节点（如果中心点附近没有现有节点）
-            if ((closest_point["x"]-avg_x)**2 + (closest_point["y"]-avg_y)**2)**0.5 > 1:  # 如果最近点距离中心超过1mm
+            if ((closest_point["x"]-avg_x)**2 + (closest_point["y"]-avg_y)**2)**0.5 > 10:  # 如果最近点距离中心超过100mm
                 # 创建新节点
                 ret = self.model.PointObj.AddCartesian(avg_x, avg_y, avg_z, center_point_name)
                 if ret[-1] != 0:
@@ -273,7 +273,7 @@ class SAP2000Model:
         ret = self.model.LoadCases.ModHistLinear.SetModalCase(unified_case_name, "MODAL")  # 指定模态分析工况
         # ret = self.model.LoadCases.ModHistLinear.SetNumberModes(unified_case_name, 30)  # 使用前30阶模态
         ret = self.model.LoadCases.ModHistLinear.SetTimeStep(unified_case_name, num_rows, 1/fs)
-        ret = self.model.LoadCases.ModHistLinear.SetDampConstant(unified_case_name, damp)  # 设置2%的阻尼比
+        ret = self.model.LoadCases.ModHistLinear.SetDampConstant(unified_case_name, damp)
         print(f"创建模态时程分析工况: {unified_case_name}")
 
         # 删除可能存在的旧荷载模式和时程函数
@@ -412,10 +412,16 @@ class SAP2000Model:
             coord_systems,
             angles
         )
-
-        # 获取工况的状态
-        # ret = self.model.
-        # 设置运行工况
+        if ret == 0:
+            print(f"成功将 {num_loads} 个荷载关联到工况 {unified_case_name}")
+        # 获取运行工况的状态
+        existing_LoadCases = []
+        ret = self.model.LoadCases.GetNameList()
+        existing_LoadCases = ret[1]
+        for case in existing_LoadCases:
+            ret = self.model.Analyze.SetRunCaseFlag(case, False)  # 确保所有工况都未选中
+        # 设置统一时程工况为运行状态
+        ret = self.model.Analyze.SetRunCaseFlag("MODAL", True)
         ret = self.model.Analyze.SetRunCaseFlag(unified_case_name, True)
         print(f"风荷载时程曲线添加完成，共添加了 {col_idx} 个荷载")
 

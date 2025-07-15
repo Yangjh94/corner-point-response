@@ -49,19 +49,18 @@ def main():
     print("=" * 80)
     
     # [1] 连接到SAP2000实例
-    sapmodel = SAP2000Model(building_name)
-    sapmodel.connect()
+    SapModel = SAP2000Model(building_name)
+    SapModel.connect()
 
     # 连接到当前打开的SAP2000实例
-    model = sapmodel.model
-    if model is None:
+    if SapModel.model is None:
         print("无法连接到SAP2000，程序终止")
         return
     
     # [2] 锁定/解锁模型
-    locked = model.GetModelIsLocked()
+    locked = SapModel.model.GetModelIsLocked()
     if locked:
-        model.SetModelIsLocked(False)
+        SapModel.model.SetModelIsLocked(False)
         print("模型已解锁")
     else:
         print("模型未锁定")
@@ -69,7 +68,7 @@ def main():
     # 创建刚性隔板
     print("\n[步骤2] 创建刚性隔板...")
     # 指定要创建刚性隔板的楼层标高列表
-    diaphragm_constraints, node_z_coords = sapmodel.add_diaphragms(target_elevations=target_elevations, tolerance=10)
+    diaphragm_constraints, node_z_coords = SapModel.add_diaphragms(target_elevations=target_elevations, tolerance=10)
     if diaphragm_constraints:
         print(f"成功创建刚性隔板: {diaphragm_constraints[0:3]} 等 {len(diaphragm_constraints)} 个隔板")
     else:
@@ -82,9 +81,9 @@ def main():
     all_results = []
     for wind_file_name in wind_file[:7]:
         # 解锁模型，以便修改荷载
-        model.SetModelIsLocked(False)
+        SapModel.model.SetModelIsLocked(False)
         wind_file_path = os.path.join(wind_file_paths, wind_file_name)
-        wind_load_count, diaphragm_centers = sapmodel.add_wind_time_history_load(
+        wind_load_count, diaphragm_centers = SapModel.add_wind_time_history_load(
             number_modes,
             diaphragm_constraints,
             node_z_coords,
@@ -100,9 +99,9 @@ def main():
         
         # [4] 运行分析
         print("开启多线程求解器...")
-        ret = model.Analyze.SetSolverOption_1(2,0,True)
+        ret = SapModel.model.Analyze.SetSolverOption_1(2,0,True)
         print(f"正在运行分析工况{wind_file_name}")
-        ret = model.Analyze.RunAnalysis()
+        ret = SapModel.model.Analyze.RunAnalysis()
         if ret == 0:
             print("分析已成功完成")
         else:
@@ -131,7 +130,7 @@ def main():
             print(f"获取节点 {target_node} 的位移和加速度响应...")
 
             # 获取位移响应时程
-            times, responses = sapmodel.get_node_response_history(
+            times, responses = SapModel.get_node_response_history(
                 building_name,
                 target_node,
                 Type=Type,
