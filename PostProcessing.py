@@ -67,6 +67,7 @@ for folder_name in folder_names:
             print(f"    警告：文件中没有找到目标列，跳过")
             continue
         
+        
         # 计算统计值并保存结果
         file_data = data[available_cols]
 

@@ -128,6 +128,7 @@ def main():
         for target_node in target_nodes:
             print(f"获取节点 {target_node} 的位移和加速度响应...")
 
+
             # 获取位移响应时程
             times, responses = SapModel.get_node_response_history(
                 building_name,
