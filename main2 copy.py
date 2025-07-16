@@ -36,7 +36,7 @@ def main():
     
     # wind_file = ["Model2_10yr_000.csv", "Model2_10yr_005.csv"]  # 测试时可以只使用一个文件
     Type = "acceleration" # acceleration or displacement
-    damp = 0.02 # 阻尼比
+    damp = 0.015 # 阻尼比
 
     # 记录程序开始时间
     start_time = time.time() # 记录开始时间
