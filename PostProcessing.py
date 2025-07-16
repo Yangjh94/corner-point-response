@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 
 # 导入编写的函数工具
 sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
-from utils.io_utils.utils import g_D
-
+from utils.io_utils.utils import *
+    
 # 设置文件路径和目标列
-building_name = "1-1"  # 模型名称
+building_name = "3-1"  # 模型名称
 analysis_type = "Acceleration"  # 分析类型
 path_Now = os.path.dirname(os.path.abspath(__file__))
 output_folder = os.path.join(os.getcwd(), "data", "output", "Timehistory_modal", building_name, analysis_type)
@@ -42,9 +42,6 @@ for folder_name in folder_names:
     csv_files = [f for f in os.listdir(folder_path) if f.endswith(".csv")]
     last_5_files = csv_files[-5:]  # 取最后5个文件
     
-    # 存储当前文件夹的数据
-    folder_stats = {col: {'means': [], 'stds': []} for col in target_columns}
-
     # 为每个文件创建一行数据，包含所有指标的统计量
     file_result = {
         'folder':folder_name,
@@ -77,17 +74,17 @@ for folder_name in folder_names:
         for col in available_cols:
             mean_val = file_data[col].mean()
             std_val = file_data[col].std()
-            extreme_val = mean_val + 3.5 * std_val
             
-            # 保存到文件夹统计中
-            folder_stats[col]['means'].append(mean_val)
-            folder_stats[col]['stds'].append(std_val)
+            g = g_D(file_data[col], dt=1/8.3227)
+            extreme_val = mean_val + g * std_val
             
             # 保存详细结果
-            file_result[f'P{last_number}_{col}_mean'] = round(mean_val, 2)
-            file_result[f'P{last_number}_{col}_std'] = round(std_val, 2)
-            file_result[f'P{last_number}_{col}_extreme'] = round(extreme_val, 2)
+            # file_result[f'P{last_number}_{col}_mean'] = round(mean_val, 2)/1000  # 转换为m
+            # file_result[f'P{last_number}_{col}_std'] = round(std_val, 2)/1000  # 转换为m
+            file_result[f'P{last_number}_{col}_extreme'] = round(extreme_val, 2)/1000  # 转换为m
 
+        range_2D = CDC(file_data['UX'].values, file_data['UY'].values, tDlt=1/8.3227)
+        file_result[f'P{last_number}_range_2D_extreme'] = round(range_2D, 2)/1000  # 转换为m
     # 添加完整的文件结果到列表
     results_data.append(file_result)
         
@@ -112,23 +109,23 @@ if results_data:
         # 创建三个子图
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 9), sharex=True)
         
-        # 绘制均值图
-        for col in target_columns:
-            ax1.plot(angles, results_df[f'P{point}_{col}_mean'], marker='o', label=f'{col}_均值', linewidth=2)
-        ax1.set_xlabel('角度 (度)')
-        ax1.set_ylabel('均值')
-        ax1.set_title(f'节点P{point}各角度下响应均值变化')
-        ax1.legend()
-        ax1.grid(True, alpha=0.3)
+        # # 绘制均值图
+        # for col in target_columns:
+        #     ax1.plot(angles, results_df[f'P{point}_{col}_mean'], marker='o', label=f'{col}_均值', linewidth=2)
+        # ax1.set_xlabel('角度 (度)')
+        # ax1.set_ylabel('均值')
+        # ax1.set_title(f'节点P{point}各角度下响应均值变化')
+        # ax1.legend()
+        # ax1.grid(True, alpha=0.3)
         
-        # 绘制标准差图
-        for col in target_columns:
-            ax2.plot(angles, results_df[f'P{point}_{col}_std'], marker='s', label=f'{col}_标准差', linewidth=2)
-        ax2.set_xlabel('角度 (度)')
-        ax2.set_ylabel('标准差')
-        ax2.set_title(f'节点P{point}各角度下响应标准差变化')
-        ax2.legend()
-        ax2.grid(True, alpha=0.3)
+        # # 绘制标准差图
+        # for col in target_columns:
+        #     ax2.plot(angles, results_df[f'P{point}_{col}_std'], marker='s', label=f'{col}_标准差', linewidth=2)
+        # ax2.set_xlabel('角度 (度)')
+        # ax2.set_ylabel('标准差')
+        # ax2.set_title(f'节点P{point}各角度下响应标准差变化')
+        # ax2.legend()
+        # ax2.grid(True, alpha=0.3)
         
         # 绘制极值图
         for col in target_columns:
@@ -147,8 +144,7 @@ if results_data:
         plot_path = os.path.join(output_parent, f"节点P{point}响应分析图.png")
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
         print(f"图表已保存: {plot_path}")
-    
-    plt.show()
+    # plt.show()
 
 # 保存结果到CSV文件
 if results_data:
@@ -158,19 +154,26 @@ if results_data:
     print("\n结果预览:")
     print(results_df.head())
     
-    # 保存CSV文件
+    # 保存Excel文件
     output_parent = os.path.dirname(output_folder)
-    csv_path = os.path.join(output_parent, "响应统计结果.csv")
-    results_df.to_csv(csv_path, index=False, encoding="utf-8-sig")
-    print(f"结果已保存: {csv_path}")
-    
+    excel_path = os.path.join(output_parent, "响应统计结果.xlsx")
+
+    # 指定要保存的sheet名称
+    sheet_name = f"{analysis_type}"
+    if os.path.exists(excel_path): # 如果文件已存在，则追加数据
+        with pd.ExcelWriter(excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+            results_df.to_excel(writer, index=False, sheet_name=sheet_name)
+    else:  # 如果文件不存在，则创建新文件
+        with pd.ExcelWriter(excel_path, mode='w', engine='openpyxl') as writer:
+            results_df.to_excel(writer, index=False, sheet_name=sheet_name)
+    print(f"结果已保存: {excel_path}")
+
     # 打印统计信息
     folder_count = len(set(results_df['folder']))
     print(f"\n处理完成!")
     print(f"共处理了 {folder_count} 个角度的数据")
     # print(f"处理的指标: {', '.join(processed_metrics)}")
     
-
 else:
     print("没有生成有效的结果数据")
 

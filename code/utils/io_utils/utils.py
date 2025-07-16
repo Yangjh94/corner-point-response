@@ -59,3 +59,89 @@ def g_D(response_data, dt, tao=600, gama=0.5772):
     gi = k + gama / k
     
     return gi
+
+import numpy as np
+
+def dA(data, dt):
+    """
+    计算数据的一阶导数（使用数值微分）
+    
+    参数:
+        data: 输入数据数组
+        dt: 时间步长
+    
+    返回:
+        一阶导数数组
+    """
+    return np.gradient(data, dt)
+
+def g_CartandLong(data, std_val, std_dot, T, fs):
+    """
+    Cart and Long峰值因子计算方法
+    
+    参数:
+        data: 响应时程数据
+        std_val: 响应标准差
+        std_dot: 响应一阶导标准差
+        T: 持续时间
+        fs: 采样频率
+    
+    返回:
+        峰值因子
+    """
+    # 简化实现，可以根据需要替换为更精确的Cart-Long方法
+    v0 = std_dot / (2 * np.pi * std_val)
+    k = np.sqrt(2 * np.log(v0 * T))
+    return k + 0.5772 / k
+
+def CDC(Xt, Yt, tDlt):
+    """
+    CPF方法二维响应极值计算
+    
+    参数:
+        Xt: X方向响应时程，零均值
+        Yt: Y方向响应时程，零均值
+        tDlt: 采样时间间隔
+    
+    返回:
+        R_CDC: CPF方法二维响应极值
+    """
+    # 转换为numpy数组
+    Xt = np.array(Xt)
+    Yt = np.array(Yt)
+    
+    # 去除均值，确保零均值
+    Xt = Xt - np.mean(Xt)
+    Yt = Yt - np.mean(Yt)
+    
+    # 计算X方向统计量
+    std_X = np.std(Xt)
+    std_X_dian = np.std(dA(Xt, tDlt))
+    gf_X = g_CartandLong(Xt, std_X, std_X_dian, 600, 1/tDlt)
+    
+    # 计算Y方向统计量
+    std_Y = np.std(Yt)
+    std_Y_dian = np.std(dA(Yt, tDlt))
+    gf_Y = g_CartandLong(Yt, std_Y, std_Y_dian, 600, 1/tDlt)
+    
+    # 计算相关系数
+    correlation_matrix = np.corrcoef(Xt, Yt)
+    rouxy = correlation_matrix[0, 1]
+    
+    # 计算极值响应
+    # R1公式
+    term1 = (gf_X * std_X)**2 + (gf_Y * std_Y)**2
+    term2_inner = ((gf_X * std_X)**2 - (gf_Y * std_Y)**2)**2 / 4
+    term2_corr = (rouxy * gf_X * std_X * gf_Y * std_Y)**2
+    term2 = np.sqrt(term2_inner + term2_corr)
+    R1 = np.sqrt(term1/2 + term2)
+    
+    # R2公式
+    R2 = 0.8 * np.sqrt((gf_X * std_X)**2 + (gf_Y * std_Y)**2)
+    
+    # 取最大值
+    R_CDC = max(R1, R2)
+    
+    return R_CDC
+
+    
