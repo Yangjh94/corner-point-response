@@ -175,8 +175,11 @@ cython_debug/
 .pypirc
 
 1-1model/
+!1-1model/*.sdb
 1-1model2/
+!1-1model2/*.sdb
 1-1model3/
+!1-1model3/*.sdb
 2-1model/
 3-1model/
 data/rew/1-1model2/

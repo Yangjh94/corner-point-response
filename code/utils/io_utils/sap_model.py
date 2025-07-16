@@ -330,7 +330,7 @@ class SAP2000Model:
 
             # 在节点上施加荷载
             x_force = 1000  # X方向风荷载
-            ret = self.model.PointObj.SetLoadForce(point_name, LoadPatternName, [0, x_force, 0, 0, 0, 0], True, "Global", 0)
+            ret = self.model.PointObj.SetLoadForce(point_name, LoadPatternName, [x_force, 0, 0, 0, 0, 0], True, "Global", 0)
             print(f"在隔板 {constraint_name} 中心点 {point_name} 添加风荷载X方向风荷载时程函数: {Wind_func_name}")
 
             # 将荷载参数添加到列表
@@ -354,7 +354,7 @@ class SAP2000Model:
             ret = self.model.LoadPatterns.Add(LoadPatternName, 6, 0, True)
             # 在节点上施加荷载
             y_force = 1000  # Y方向风荷载
-            ret = self.model.PointObj.SetLoadForce(point_name, LoadPatternName, [-1*y_force, 0, 0, 0, 0, 0], True, "Global", 0)
+            ret = self.model.PointObj.SetLoadForce(point_name, LoadPatternName, [0, y_force, 0, 0, 0, 0], True, "Global", 0)
             print(f"在隔板 {constraint_name} 中心点 {point_name} 添加风荷载Y方向风荷载时程函数: {Wind_func_name}")
 
             # 将荷载参数添加到列表

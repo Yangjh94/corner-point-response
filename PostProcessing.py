@@ -16,7 +16,7 @@ from utils.io_utils.utils import *
 building_names = ["1-1", "2-1", "3-1"]  # 模型名称
 analysis_type = "Acceleration"  # 分析类型
 path_Now = os.path.dirname(os.path.abspath(__file__))
-target_columns = ['UX', 'UY', 'RZ']  # 目标分析列
+target_columns = ['UX', 'UY']  # 目标分析列
 
 for building_name in building_names:
     output_folder = os.path.join(os.getcwd(), "data", "output", "Timehistory_modal", building_name, analysis_type)
@@ -92,19 +92,24 @@ for building_name in building_names:
         results_data.append(file_result)
             
     # 打印结果预览
-    results_df = pd.DataFrame(results_data)
+    results_df = pd.DataFrame(results_data)  # 转换为DataFrame
     print("\n结果预览:")
     print(results_df.head())
-
-    # 找到results_df中的最大值
-    max_extreme = results_df[[col for col in results_df.columns if 'extreme' in col]].max().max()
-    print(f"\n最大极值: {max_extreme} m")
 
     # 找到range_2D_extreme的最大值
     max_range_2D_extreme = results_df[[col for col in results_df.columns if 'range_2D_extreme' in col]].max().max()
     print(f"\n最大2D范围极值: {max_range_2D_extreme} m")
-
-    # 结果处理，获得中心点极值和角点极值
+    
+    # 给出最大值的列名和对应的角度
+    max_range_2D_extreme_cols = [col for col in results_df.columns if 'range_2D_extreme' in col]
+    max_extreme_col_name = results_df[max_range_2D_extreme_cols].max().idxmax()
+    
+    # 提取节点编号，提取UX和UY的节点编号
+    point_number = max_extreme_col_name.split('_')[0][1:]  # 提取P后面的数字
+    print(f"最大2D范围极值对应的节点: P{point_number}")
+    results_df2 = results_df[[col for col in results_df.columns if f'P{point_number}_' in col]]
+    # 将results_df2转化为数组，保存到指定sheet的指定位置
+    # results_df2 = results_df2.values
 
     # 创建可视化图表
     if results_data:
@@ -173,11 +178,13 @@ for building_name in building_names:
         # 指定要保存的sheet名称
         sheet_name = f"{building_name}_{analysis_type}"
         if os.path.exists(excel_path): # 如果文件已存在，则追加数据
-            with pd.ExcelWriter(excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+            with pd.ExcelWriter(excel_path, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
                 results_df.to_excel(writer, index=False, sheet_name=sheet_name)
+                results_df2.to_excel(writer, index=False, sheet_name=sheet_name, startrow=len(results_df)+2)
         else:  # 如果文件不存在，则创建新文件
             with pd.ExcelWriter(excel_path, mode='w', engine='openpyxl') as writer:
                 results_df.to_excel(writer, index=False, sheet_name=sheet_name)
+                results_df2.to_excel(writer, index=False, sheet_name=sheet_name, startrow=len(results_df)+2)
         print(f"结果已保存: {excel_path}")
 
         # 打印统计信息
