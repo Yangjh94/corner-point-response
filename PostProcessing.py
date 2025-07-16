@@ -13,7 +13,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
 from utils.io_utils.utils import *
     
 # 设置文件路径和目标列
-building_name = "3-1"  # 模型名称
+building_name = "1-1"  # 模型名称
 analysis_type = "Acceleration"  # 分析类型
 path_Now = os.path.dirname(os.path.abspath(__file__))
 output_folder = os.path.join(os.getcwd(), "data", "output", "Timehistory_modal", building_name, analysis_type)
