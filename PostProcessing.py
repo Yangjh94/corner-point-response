@@ -78,7 +78,7 @@ for building_name in building_names:
                 std_val = file_data[col].std()
                 
                 g = g_D(file_data[col], dt=1/8.3227)
-                extreme_val = mean_val + g * std_val
+                extreme_val = np.abs(mean_val) + g * std_val
                 
                 # 保存详细结果
                 # file_result[f'P{last_number}_{col}_mean'] = round(mean_val, 2)/1000  # 转换为m
@@ -87,6 +87,7 @@ for building_name in building_names:
 
             range_2D = CDC(file_data['UX'].values, file_data['UY'].values, tDlt=1/8.3227)
             file_result[f'P{last_number}_range_2D_extreme'] = round(range_2D, 2)/1000  # 转换为m
+
         # 添加完整的文件结果到列表
         results_data.append(file_result)
             
@@ -94,6 +95,14 @@ for building_name in building_names:
     results_df = pd.DataFrame(results_data)
     print("\n结果预览:")
     print(results_df.head())
+
+    # 找到results_df中的最大值
+    max_extreme = results_df[[col for col in results_df.columns if 'extreme' in col]].max().max()
+    print(f"\n最大极值: {max_extreme} m")
+
+    # 找到range_2D_extreme的最大值
+    max_range_2D_extreme = results_df[[col for col in results_df.columns if 'range_2D_extreme' in col]].max().max()
+    print(f"\n最大2D范围极值: {max_range_2D_extreme} m")
 
     # 结果处理，获得中心点极值和角点极值
 
