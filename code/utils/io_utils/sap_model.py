@@ -51,6 +51,14 @@ class SAP2000Model:
                 print(f"成功连接到SAP2000！当前模型文件: {file_path}")
             
             self.is_connected = True
+
+            # 获取运行工况的状态
+            existing_LoadCases = []
+            ret = self.model.LoadCases.GetNameList()
+            existing_LoadCases = ret[1]
+            for case in existing_LoadCases:
+                ret = self.model.Analyze.SetRunCaseFlag(case, False)  # 确保所有工况都未选中
+
             return True
             
         except Exception as e:
@@ -635,11 +643,11 @@ class SAP2000Model:
         modal_periods = []
         modal_freqs = []
         # =============================打印信息================================
-        # print(f"模态分析结果: 共 {len(Period)} 个模态")
-        # for i in range(min(num_modes, len(Period))):
-        #     modal_periods.append(Period[i])
-        #     modal_freqs.append(Frequency[i])
-        #     print(f"模态 {i+1}: 周期 = {Period[i]:.6f} 秒, 频率 = {Frequency[i]:.6f} Hz")
+        print(f"模态分析结果: 共 {len(Period)} 个模态")
+        for i in range(min(num_modes, len(Period))):
+            modal_periods.append(Period[i])
+            modal_freqs.append(Frequency[i])
+            print(f"模态 {i+1}: 周期 = {Period[i]:.6f} 秒, 频率 = {Frequency[i]:.6f} Hz")
 
         # 2. 获取所有节点的振型（模态位移）
         # eItemTypeElm 枚举，GroupElm=2
