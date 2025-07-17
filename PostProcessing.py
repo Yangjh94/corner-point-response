@@ -13,7 +13,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'code'))
 from utils.io_utils.utils import *
     
 # 设置文件路径和目标列
-building_names = ["1-1", "2-1", "3-1"]  # 模型名称
+building_names = ["1-1"]  # 模型名称
 analysis_type = "Acceleration"  # 分析类型
 path_Now = os.path.dirname(os.path.abspath(__file__))
 target_columns = ['UX', 'UY']  # 目标分析列
@@ -42,7 +42,7 @@ for building_name in building_names:
         # 获取文件夹下的CSV文件
         folder_path = os.path.join(output_folder, folder_name)
         csv_files = [f for f in os.listdir(folder_path) if f.endswith(".csv")]
-        last_5_files = csv_files[-5:]  # 取最后5个文件
+        last_5_files = csv_files[-10:-5]  # 取最后5个文件
         
         # 为每个文件创建一行数据，包含所有指标的统计量
         file_result = {

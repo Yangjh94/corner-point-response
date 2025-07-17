@@ -24,6 +24,9 @@ def main():
     # 连接到SAP2000
     SapModel.connect()
     ret = SapModel.model.Analyze.SetRunCaseFlag("MODAL", True)
+    ret = SapModel.model.Analyze.SetRunCaseFlag("DEAD", True)
+    ret = SapModel.model.Analyze.SetRunCaseFlag("LIVE", True)
+    ret = SapModel.model.Analyze.SetRunCaseFlag("Wind_time_history", False)
     ret = SapModel.model.Analyze.RunAnalysis()
 
     # 获取模型的所有节点坐标信息
@@ -37,9 +40,9 @@ def main():
     # 获取节点质量
     node_masses = SapModel.get_node_mass()
     # =================打印最后20个节点的质量信息=========================
-    # print("\n最后20个节点的质量信息:")
-    # for point_name in list(node_masses.keys())[-20:]:
-    #     print(f"节点 {point_name}: 质量 = {node_masses[point_name]}")
+    print("\n最后20个节点的质量信息:")
+    for point_name in list(node_masses.keys())[-20:]:
+        print(f"节点 {point_name}: 质量 = {node_masses[point_name]}")
 
     # 将node_coords和node_masses中标高一直的节点质量进行求和
     Floor_Masses = {}
@@ -64,14 +67,16 @@ def main():
             mass[5] = mass[0]*((Center_coords[0]-x)/1000)**2 + mass[1]*((Center_coords[1]-y)/1000)**2
             Floor_Masses[z] = [x + y for x, y in zip(Floor_Masses[z], mass)]
     # ======================打印每层的质量信息============================
-    # print(f"\n模型中共有 {len(Floor_Masses)} 层，每层的质量信息如下:")
-    # for z, mass in Floor_Masses.items():
-    #     print(f"层 {z}: 质量 = {mass}")
+    print(f"\n模型中共有 {len(Floor_Masses)} 层，每层的质量信息如下:")
+    for z, mass in Floor_Masses.items():
+        print(f"层 {z}: 质量 = {mass}")
     # 直接保存每层质量信息到CSV文件
     df_floor_masses = pd.DataFrame.from_dict(Floor_Masses, orient='index', columns=["MASS_X", "MASS_Y", "MASS_Z", "MASS_R1", "MASS_R2", "MASS_R3"])
     df_floor_masses.index.name = 'FLOOR_LEVEL'
 
-    output_dir = os.path.join("data", "output", "parameters", building_name)
+    output_dir = os.path.join("data", "output", "parameter", building_name)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
     df_floor_masses.to_csv(os.path.join(output_dir, "Floor_Masses.csv"))
 
     modal_periods, modal_freqs, df_shapes = SapModel.get_modal_results(number_modes)
