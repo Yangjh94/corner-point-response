@@ -57,15 +57,17 @@ def main():
 
     Center_coords = (sum(coord[0] for coord in node_coords.values()) / len(node_coords),
                      sum(coord[1] for coord in node_coords.values()) / len(node_coords))
-    for point_name, mass in list(node_masses.items())[2000:]:
+    for point_name, mass in list(node_masses.items()):
         # 获取节点坐标
         x, y, z = node_coords[point_name] # 保留0位小数
         z = round(z, 0)
-        if z in Floor_Masses:
+        if z in Floor_Masses or any(abs(z - floor_z) < 10 for floor_z in Floor_Masses.keys()):
+            # 如果z在目标楼层列表中，或者与某个楼层的高度差小于10mm，则将质量添加到对应楼层
+            floor_z = min(Floor_Masses.keys(), key=lambda f: abs(f - z)) # 找到最接近的楼层
             # 将元组转化为列表，以便修改
             mass = list(mass)
             mass[5] = mass[0]*((Center_coords[0]-x)/1000)**2 + mass[1]*((Center_coords[1]-y)/1000)**2
-            Floor_Masses[z] = [x + y for x, y in zip(Floor_Masses[z], mass)]
+            Floor_Masses[floor_z] = [x + y for x, y in zip(Floor_Masses[floor_z], mass)]
     # ======================打印每层的质量信息============================
     print(f"\n模型中共有 {len(Floor_Masses)} 层，每层的质量信息如下:")
     for z, mass in Floor_Masses.items():
@@ -80,6 +82,15 @@ def main():
     df_floor_masses.to_csv(os.path.join(output_dir, "Floor_Masses.csv"))
 
     modal_periods, modal_freqs, df_shapes = SapModel.get_modal_results(number_modes)
+    # 保存模态周期和频率到CSV文件
+    df_modal = pd.DataFrame({
+        "ModeNum": range(1, len(modal_periods) + 1),
+        "Period": modal_periods,
+        "Frequency": modal_freqs
+    })
+    df_modal.index.name = 'ModeNum'
+    df_modal.to_csv(os.path.join(output_dir, "Frequency.csv"), index=False)
+
     # df_shapes.to_csv("modal_shapes.csv", index=False)
     print(f"df_shapes的尺寸为: {df_shapes.shape}\n前5行振型数据:")
     print(df_shapes.head())
