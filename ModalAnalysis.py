@@ -24,8 +24,8 @@ def main():
     # 连接到SAP2000
     SapModel.connect()
     ret = SapModel.model.Analyze.SetRunCaseFlag("MODAL", True)
-    ret = SapModel.model.Analyze.SetRunCaseFlag("DEAD", True)
-    ret = SapModel.model.Analyze.SetRunCaseFlag("LIVE", True)
+    ret = SapModel.model.Analyze.SetRunCaseFlag("DEAD", False)
+    ret = SapModel.model.Analyze.SetRunCaseFlag("LIVE", False)
     ret = SapModel.model.Analyze.SetRunCaseFlag("Wind_time_history", False)
     ret = SapModel.model.Analyze.RunAnalysis()
 

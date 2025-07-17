@@ -42,7 +42,7 @@ for building_name in building_names:
         # 获取文件夹下的CSV文件
         folder_path = os.path.join(output_folder, folder_name)
         csv_files = [f for f in os.listdir(folder_path) if f.endswith(".csv")]
-        last_5_files = csv_files[-10:-5]  # 取最后5个文件
+        last_5_files = csv_files[-5:]  # 取最后5个文件
         
         # 为每个文件创建一行数据，包含所有指标的统计量
         file_result = {
