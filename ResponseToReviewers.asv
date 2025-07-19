@@ -1,0 +1,744 @@
+% 审稿意见回复中使用到的图片,绘制1/4扇形图
+
+clc;clear;close all;
+%% 1-1 角点
+% 读取data\output\Timehistory_modal\响应统计结果.xlsx文件结果对比子文件中的A5:A23
+% 读取Excel文件的指定范围
+file_path = 'data\output\Timehistory_modal\响应统计结果.xlsx';
+
+% 直接读取数值数据
+x3 = readmatrix(file_path, 'Sheet', '结果对比', 'Range', 'A5:A23');
+y3 = readmatrix(file_path, 'Sheet', '1-1_Acceleration', 'Range', 'A14:C23');
+y3 = [y3;y3(end-1:-1:1,:)];
+
+figure(color='w')
+polarplot(x3,y3(:,1)...
+    ,x3,y3(:,2)...
+    ,x3,y3(:,3)...)
+    ,'linewidth',1.5);
+hold on
+
+hLines = findobj(gca, 'Type', 'line');
+set(hLines(1), 'LineStyle', '-', 'Color', 'k');
+set(hLines(2), 'LineStyle', '-.', 'Color', 'r');
+set(hLines(3), 'LineStyle', ':', 'Color', 'b');
+
+ax = gca;
+ax.ThetaLim = [0 90];
+ax.ThetaZeroLocation = 'bottom';
+ax.ThetaGrid = 'off';  % 隐藏角度网格线
+ax.RGrid = 'off';  % 隐藏半径网格线
+ax.RLim = [-0.1 0.2];
+ax.RTick = [0:0.05:0.2];
+% ax.RTickLabel = [];
+% ax.RTickMode = 'auto'
+set(gcf,'unit','centimeters','Position',[2 2 18.2 8.2]);       %设置图片的大小
+set(gca,'unit','centimeters','position',[2,1,6,6]);             %设置坐标轴相对图片的大小
+
+%3:1建筑
+% annotation('rectangle', [0.035,0.794,0.155,0.12] ...
+%     ,'LineWidth',1,'Color','k' ...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.183,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+% text(2.1/6*pi,0.28,'C','FontSize',10.5,'FontName','Times New Roman');
+
+% % 2:1建筑
+% annotation('rectangle', [0.055,0.793,0.11,0.12] ...
+%     ,'LineWidth',1.5,'Color','r' ...
+%     ,'LineStyle','-.'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.158,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+%1:1建筑
+annotation('rectangle', [0.075,0.793,0.065,0.12] ...
+    ,'LineWidth',1.5,'Color','k' ...
+    ,'LineStyle','-'...
+    ,'FaceColor',"#A9A9A9");
+annotation('ellipse', [0.133,0.78,0.014,0.027] ...
+    ,'LineWidth',1,'Color','r' ...
+    ,'FaceColor',"r");
+
+annotation('arrow', [0.11,0.05], [0.85,0.85] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(9.6/6*pi,-0.05,'Y','FontSize',10.5,'FontName','Times New Roman');
+
+annotation('arrow', [0.11,0.11], [0.85,0.965] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(5.6/6*pi,-0.06,'X','FontSize',10.5,'FontName','Times New Roman');
+
+% 中心点
+% annotation('ellipse', [0.1,0.84,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+%图上标记
+annotation('line', [0.11,0.11], [0.65,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'LineStyle','-.');
+annotation('arrow', [0.145,0.11], [0.68,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'HeadStyle','plain' ...
+,'HeadWidth',5);
+
+theta = linspace(0,3/6*pi,20);
+rho = 0*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = linspace(0,3/6*pi,20);
+rho = 0.2*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [0 0];
+rho = [0 0.2];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [1/2*pi 1/2*pi];
+rho = [0 1];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+
+theta = linspace(0,3/6*pi,20);
+rho = [0.05*ones(1,size(theta,2));
+0.1*ones(1,size(theta,2));
+0.15*ones(1,size(theta,2))];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [1/6*pi 1/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [2/6*pi 2/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+
+theta = linspace(0,0.7/6*pi,10);
+rho = -0.04*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1.5,'Color','k');
+text(0.25/6*pi,-0.03,'\theta','FontSize',12,'FontName','Times New Roman');
+
+legend('X-direction','Y-direction','A-direction'...
+    ,'Position',[0.42 0.15 0 0] ...
+    ,'Orientation','vertical')
+legend('boxoff')
+
+t = text(-0.2/6*pi,0.1,'Max(Acc_{X or Y})/Acc_A', ...
+    'FontSize',10.5, ...
+    'FontName','Times New Roman', ...
+    'HorizontalAlignment','center', ...
+    'Rotation',90);
+
+set(gca, 'FontSize',11,'Fontname', 'Times New Roman','LineWidth',1)%设置坐标轴的字号、字体和线宽
+
+%% 1-1 中心点
+% 读取data\output\Timehistory_modal\响应统计结果.xlsx文件结果对比子文件中的A5:A23
+% 读取Excel文件的指定范围
+file_path = 'data\output\Timehistory_modal\响应统计结果.xlsx';
+sheet_name = '1-1_Acceleration';
+
+% 直接读取数值数据
+x3 = readmatrix(file_path, 'Sheet', "结果对比", 'Range', 'A5:A23');
+y3 = readmatrix(file_path, 'Sheet', sheet_name, 'Range', 'C2:E11');
+y3 = [y3;y3(end-1:-1:1,:)];
+
+figure(color='w')
+polarplot(x3,y3(:,1)...
+    ,x3,y3(:,2)...
+    ,x3,y3(:,3)...)
+    ,'linewidth',1.5);
+hold on
+
+hLines = findobj(gca, 'Type', 'line');
+set(hLines(1), 'LineStyle', '-', 'Color', 'k');
+set(hLines(2), 'LineStyle', '-.', 'Color', 'r');
+set(hLines(3), 'LineStyle', ':', 'Color', 'b');
+
+ax = gca;
+ax.ThetaLim = [0 90];
+ax.ThetaZeroLocation = 'bottom';
+ax.ThetaGrid = 'off';  % 隐藏角度网格线
+ax.RGrid = 'off';  % 隐藏半径网格线
+ax.RLim = [-0.1 0.2];
+ax.RTick = [0:0.05:0.2];
+% ax.RTickLabel = [];
+% ax.RTickMode = 'auto'
+set(gcf,'unit','centimeters','Position',[2 2 18.2 8.2]);       %设置图片的大小
+set(gca,'unit','centimeters','position',[2,1,6,6]);             %设置坐标轴相对图片的大小
+
+%3:1建筑
+% annotation('rectangle', [0.035,0.794,0.155,0.12] ...
+%     ,'LineWidth',1,'Color','k' ...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.183,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+% text(2.1/6*pi,0.28,'C','FontSize',10.5,'FontName','Times New Roman');
+
+% % 2:1建筑
+% annotation('rectangle', [0.055,0.793,0.11,0.12] ...
+%     ,'LineWidth',1.5,'Color','r' ...
+%     ,'LineStyle','-.'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.158,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+%1:1建筑
+annotation('rectangle', [0.075,0.793,0.065,0.12] ...
+    ,'LineWidth',1.5,'Color','k' ...
+    ,'LineStyle','-'...
+    ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.133,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+annotation('arrow', [0.11,0.05], [0.85,0.85] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(9.6/6*pi,-0.05,'Y','FontSize',10.5,'FontName','Times New Roman');
+
+annotation('arrow', [0.11,0.11], [0.85,0.965] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(5.6/6*pi,-0.06,'X','FontSize',10.5,'FontName','Times New Roman');
+
+% 中心点
+annotation('ellipse', [0.1,0.84,0.014,0.027] ...
+    ,'LineWidth',1,'Color','r' ...
+    ,'FaceColor',"r");
+
+%图上标记
+annotation('line', [0.11,0.11], [0.65,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'LineStyle','-.');
+annotation('arrow', [0.145,0.11], [0.68,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'HeadStyle','plain' ...
+,'HeadWidth',5);
+
+theta = linspace(0,3/6*pi,20);
+rho = 0*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = linspace(0,3/6*pi,20);
+rho = 0.2*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [0 0];
+rho = [0 0.2];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [1/2*pi 1/2*pi];
+rho = [0 1];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+
+theta = linspace(0,3/6*pi,20);
+rho = [0.05*ones(1,size(theta,2));
+0.1*ones(1,size(theta,2));
+0.15*ones(1,size(theta,2))];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [1/6*pi 1/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [2/6*pi 2/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+
+theta = linspace(0,0.7/6*pi,10);
+rho = -0.04*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1.5,'Color','k');
+text(0.25/6*pi,-0.03,'\theta','FontSize',12,'FontName','Times New Roman');
+
+legend('X-direction','Y-direction','A-direction'...
+    ,'Position',[0.42 0.15 0 0] ...
+    ,'Orientation','vertical')
+legend('boxoff')
+
+t = text(-0.2/6*pi,0.1,'Max(Acc_{X or Y})/Acc_A', ...
+    'FontSize',10.5, ...
+    'FontName','Times New Roman', ...
+    'HorizontalAlignment','center', ...
+    'Rotation',90);
+
+set(gca, 'FontSize',11,'Fontname', 'Times New Roman','LineWidth',1)%设置坐标轴的字号、字体和线宽
+
+%% 2-1 角点
+% 读取data\output\Timehistory_modal\响应统计结果.xlsx文件结果对比子文件中的A5:A23
+% 读取Excel文件的指定范围
+file_path = 'data\output\Timehistory_modal\响应统计结果.xlsx';
+
+% 直接读取数值数据
+x3 = readmatrix(file_path, 'Sheet', '结果对比', 'Range', 'A5:A23');
+y3 = readmatrix(file_path, 'Sheet', '2-1_Acceleration', 'Range', 'A23:C41');
+
+chongxianqi = 10;
+figure(color='w')
+polarplot(x3,y3(:,1)...
+    ,x3,y3(:,2)...
+    ,x3,y3(:,3)...)
+    ,'linewidth',1.5);
+hold on
+
+hLines = findobj(gca, 'Type', 'line');
+set(hLines(1), 'LineStyle', '-', 'Color', 'k');
+set(hLines(2), 'LineStyle', '-.', 'Color', 'r');
+set(hLines(3), 'LineStyle', ':', 'Color', 'b');
+
+ax = gca;
+ax.ThetaLim = [0 90];
+ax.ThetaZeroLocation = 'bottom';
+ax.ThetaGrid = 'off';  % 隐藏角度网格线
+ax.RGrid = 'off';  % 隐藏半径网格线
+ax.RLim = [-0.1 0.2];
+ax.RTick = [0:0.05:0.2];
+% ax.RTickLabel = [];
+% ax.RTickMode = 'auto'
+set(gcf,'unit','centimeters','Position',[2 2 18.2 8.2]);       %设置图片的大小
+set(gca,'unit','centimeters','position',[2,1,6,6]);             %设置坐标轴相对图片的大小
+
+%3:1建筑
+% annotation('rectangle', [0.035,0.794,0.155,0.12] ...
+%     ,'LineWidth',1,'Color','k' ...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.183,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+% text(2.1/6*pi,0.28,'C','FontSize',10.5,'FontName','Times New Roman');
+
+% % 2:1建筑
+annotation('rectangle', [0.055,0.793,0.11,0.12] ...
+    ,'LineWidth',1.5,'Color','k' ...
+    ,'LineStyle','-'...
+    ,'FaceColor',"#A9A9A9");
+annotation('ellipse', [0.158,0.78,0.014,0.027] ...
+    ,'LineWidth',1,'Color','r' ...
+    ,'FaceColor',"r");
+
+%1:1建筑
+% annotation('rectangle', [0.075,0.793,0.065,0.12] ...
+%     ,'LineWidth',1.5,'Color','k' ...
+%     ,'LineStyle','-'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.133,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+annotation('arrow', [0.11,0.03], [0.85,0.85] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(9.5/6*pi,-0.03,'Y','FontSize',10.5,'FontName','Times New Roman');
+
+annotation('arrow', [0.11,0.11], [0.85,0.965] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(5.6/6*pi,-0.06,'X','FontSize',10.5,'FontName','Times New Roman');
+
+% 中心点
+% annotation('ellipse', [0.1,0.84,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+%图上标记
+annotation('line', [0.11,0.11], [0.65,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'LineStyle','-.');
+annotation('arrow', [0.145,0.11], [0.68,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'HeadStyle','plain' ...
+,'HeadWidth',5);
+
+theta = linspace(0,3/6*pi,20);
+rho = 0*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = linspace(0,3/6*pi,20);
+rho = 0.2*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [0 0];
+rho = [0 0.2];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [1/2*pi 1/2*pi];
+rho = [0 1];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+
+theta = linspace(0,3/6*pi,20);
+rho = [0.05*ones(1,size(theta,2));
+0.1*ones(1,size(theta,2));
+0.15*ones(1,size(theta,2))];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [1/6*pi 1/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [2/6*pi 2/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+
+theta = linspace(0,0.7/6*pi,10);
+rho = -0.04*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1.5,'Color','k');
+text(0.25/6*pi,-0.03,'\theta','FontSize',12,'FontName','Times New Roman');
+
+t = text(-0.2/6*pi,0.1,'Max(Acc_{X or Y})/Acc_A', ...
+    'FontSize',10.5, ...
+    'FontName','Times New Roman', ...
+    'HorizontalAlignment','center', ...
+    'Rotation',90);
+
+set(gca, 'FontSize',11,'Fontname', 'Times New Roman','LineWidth',1)%设置坐标轴的字号、字体和线宽
+%% 2-1 中心点
+% 读取data\output\Timehistory_modal\响应统计结果.xlsx文件结果对比子文件中的A5:A23
+% 读取Excel文件的指定范围
+file_path = 'data\output\Timehistory_modal\响应统计结果.xlsx';
+
+% 直接读取数值数据
+x3 = readmatrix(file_path, 'Sheet', '结果对比', 'Range', 'A5:A23');
+y3 = readmatrix(file_path, 'Sheet', '2-1_Acceleration', 'Range', 'C2:E20');
+
+chongxianqi = 10;
+figure(color='w')
+polarplot(x3,y3(:,1)...
+    ,x3,y3(:,2)...
+    ,x3,y3(:,3)...)
+    ,'linewidth',1.5);
+hold on
+
+hLines = findobj(gca, 'Type', 'line');
+set(hLines(1), 'LineStyle', '-', 'Color', 'k');
+set(hLines(2), 'LineStyle', '-.', 'Color', 'r');
+set(hLines(3), 'LineStyle', ':', 'Color', 'b');
+
+ax = gca;
+ax.ThetaLim = [0 90];
+ax.ThetaZeroLocation = 'bottom';
+ax.ThetaGrid = 'off';  % 隐藏角度网格线
+ax.RGrid = 'off';  % 隐藏半径网格线
+ax.RLim = [-0.1 0.2];
+ax.RTick = [0:0.05:0.2];
+% ax.RTickLabel = [];
+% ax.RTickMode = 'auto'
+set(gcf,'unit','centimeters','Position',[2 2 18.2 8.2]);       %设置图片的大小
+set(gca,'unit','centimeters','position',[2,1,6,6]);             %设置坐标轴相对图片的大小
+
+%3:1建筑
+% annotation('rectangle', [0.035,0.794,0.155,0.12] ...
+%     ,'LineWidth',1,'Color','k' ...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.183,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+% text(2.1/6*pi,0.28,'C','FontSize',10.5,'FontName','Times New Roman');
+
+% % 2:1建筑
+annotation('rectangle', [0.055,0.793,0.11,0.12] ...
+    ,'LineWidth',1.5,'Color','k' ...
+    ,'LineStyle','-'...
+    ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.158,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+% %1:1建筑
+% annotation('rectangle', [0.075,0.793,0.065,0.12] ...
+%     ,'LineWidth',1.5,'Color','k' ...
+%     ,'LineStyle','-'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.133,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+annotation('arrow', [0.11,0.025], [0.85,0.85] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(9.5/6*pi,-0.03,'Y','FontSize',10.5,'FontName','Times New Roman');
+
+annotation('arrow', [0.11,0.11], [0.85,0.965] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(5.6/6*pi,-0.06,'X','FontSize',10.5,'FontName','Times New Roman');
+
+% 中心点
+annotation('ellipse', [0.1,0.84,0.014,0.027] ...
+    ,'LineWidth',1,'Color','r' ...
+    ,'FaceColor',"r");
+
+%图上标记
+annotation('line', [0.11,0.11], [0.65,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'LineStyle','-.');
+annotation('arrow', [0.145,0.11], [0.68,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'HeadStyle','plain' ...
+,'HeadWidth',5);
+
+theta = linspace(0,3/6*pi,20);
+rho = 0*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = linspace(0,3/6*pi,20);
+rho = 0.2*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [0 0];
+rho = [0 0.2];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [1/2*pi 1/2*pi];
+rho = [0 1];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+
+theta = linspace(0,3/6*pi,20);
+rho = [0.05*ones(1,size(theta,2));
+0.1*ones(1,size(theta,2));
+0.15*ones(1,size(theta,2))];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [1/6*pi 1/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [2/6*pi 2/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+
+theta = linspace(0,0.7/6*pi,10);
+rho = -0.04*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1.5,'Color','k');
+text(0.25/6*pi,-0.03,'\theta','FontSize',12,'FontName','Times New Roman');
+
+legend('X-direction','Y-direction','A-direction'...
+    ,'Position',[0.42 0.15 0 0] ...
+    ,'Orientation','vertical')
+legend('boxoff')
+
+t = text(-0.2/6*pi,0.1,'Max(Acc_{X or Y})/Acc_A', ...
+    'FontSize',10.5, ...
+    'FontName','Times New Roman', ...
+    'HorizontalAlignment','center', ...
+    'Rotation',90);
+
+set(gca, 'FontSize',11,'Fontname', 'Times New Roman','LineWidth',1)%设置坐标轴的字号、字体和线宽
+%% 3-1 角点
+% 读取data\output\Timehistory_modal\响应统计结果.xlsx文件结果对比子文件中的A5:A23
+% 读取Excel文件的指定范围
+file_path = 'data\output\Timehistory_modal\响应统计结果.xlsx';
+
+% 直接读取数值数据
+x3 = readmatrix(file_path, 'Sheet', '结果对比', 'Range', 'A5:A23');
+y3 = readmatrix(file_path, 'Sheet', '3-1_Acceleration', 'Range', 'A23:C41');
+
+chongxianqi = 10;
+figure(color='w')
+polarplot(x3,y3(:,1)...
+    ,x3,y3(:,2)...
+    ,x3,y3(:,3)...)
+    ,'linewidth',1.5);
+hold on
+
+hLines = findobj(gca, 'Type', 'line');
+set(hLines(1), 'LineStyle', '-', 'Color', 'k');
+set(hLines(2), 'LineStyle', '-.', 'Color', 'r');
+set(hLines(3), 'LineStyle', ':', 'Color', 'b');
+
+ax = gca;
+ax.ThetaLim = [0 90];
+ax.ThetaZeroLocation = 'bottom';
+ax.ThetaGrid = 'off';  % 隐藏角度网格线
+ax.RGrid = 'off';  % 隐藏半径网格线
+ax.RLim = [-0.1 0.2];
+ax.RTick = [0:0.05:0.2];
+% ax.RTickLabel = [];
+% ax.RTickMode = 'auto'
+set(gcf,'unit','centimeters','Position',[2 2 18.2 8.2]);       %设置图片的大小
+set(gca,'unit','centimeters','position',[2,1,6,6]);             %设置坐标轴相对图片的大小
+
+%3:1建筑
+annotation('rectangle', [0.035,0.794,0.155,0.12] ...
+    ,'LineWidth',1,'Color','k' ...
+    ,'FaceColor',"#A9A9A9");
+annotation('ellipse', [0.183,0.78,0.014,0.027] ...
+    ,'LineWidth',1,'Color','r' ...
+    ,'FaceColor',"r");
+text(2.1/6*pi,-0.017,'C','FontSize',10.5,'FontName','Times New Roman');
+
+% % 2:1建筑
+% annotation('rectangle', [0.055,0.793,0.11,0.12] ...
+%     ,'LineWidth',1.5,'Color','k' ...
+%     ,'LineStyle','-'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.158,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+%1:1建筑
+% annotation('rectangle', [0.075,0.793,0.065,0.12] ...
+%     ,'LineWidth',1.5,'Color','k' ...
+%     ,'LineStyle','-'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.133,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+annotation('arrow', [0.11,0.01], [0.85,0.85] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(9.4/6*pi,-0.01,'Y','FontSize',10.5,'FontName','Times New Roman');
+
+annotation('arrow', [0.11,0.11], [0.85,0.965] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(5.4/6*pi,-0.06,'X','FontSize',10.5,'FontName','Times New Roman');
+
+% 中心点
+% annotation('ellipse', [0.1,0.84,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+%图上标记
+annotation('line', [0.11,0.11], [0.65,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'LineStyle','-.');
+annotation('arrow', [0.145,0.11], [0.68,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'HeadStyle','plain' ...
+,'HeadWidth',5);
+
+theta = linspace(0,3/6*pi,20);
+rho = 0*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = linspace(0,3/6*pi,20);
+rho = 0.2*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [0 0];
+rho = [0 0.2];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [1/2*pi 1/2*pi];
+rho = [0 1];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+
+theta = linspace(0,3/6*pi,20);
+rho = [0.05*ones(1,size(theta,2));
+0.1*ones(1,size(theta,2));
+0.15*ones(1,size(theta,2))];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [1/6*pi 1/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [2/6*pi 2/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+
+theta = linspace(0,0.7/6*pi,10);
+rho = -0.04*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1.5,'Color','k');
+text(0.25/6*pi,-0.03,'\theta','FontSize',12,'FontName','Times New Roman');
+
+
+t = text(-0.2/6*pi,0.1,'Max(Acc_{X or Y})/Acc_A', ...
+    'FontSize',10.5, ...
+    'FontName','Times New Roman', ...
+    'HorizontalAlignment','center', ...
+    'Rotation',90);
+
+set(gca, 'FontSize',11,'Fontname', 'Times New Roman','LineWidth',1)%设置坐标轴的字号、字体和线宽
+%% 3-1 中心点
+% 读取data\output\Timehistory_modal\响应统计结果.xlsx文件结果对比子文件中的A5:A23
+% 读取Excel文件的指定范围
+file_path = 'data\output\Timehistory_modal\响应统计结果.xlsx';
+
+% 直接读取数值数据
+x3 = readmatrix(file_path, 'Sheet', '结果对比', 'Range', 'A5:A23');
+y3 = readmatrix(file_path, 'Sheet', '3-1_Acceleration', 'Range', 'C2:E20');
+
+chongxianqi = 10;
+figure(color='w')
+polarplot(x3,y3(:,1)...
+    ,x3,y3(:,2)...
+    ,x3,y3(:,3)...)
+    ,'linewidth',1.5);
+hold on
+
+hLines = findobj(gca, 'Type', 'line');
+set(hLines(1), 'LineStyle', '-', 'Color', 'k');
+set(hLines(2), 'LineStyle', '-.', 'Color', 'r');
+set(hLines(3), 'LineStyle', ':', 'Color', 'b');
+
+ax = gca;
+ax.ThetaLim = [0 90];
+ax.ThetaZeroLocation = 'bottom';
+ax.ThetaGrid = 'off';  % 隐藏角度网格线
+ax.RGrid = 'off';  % 隐藏半径网格线
+ax.RLim = [-0.1 0.2];
+ax.RTick = [0:0.05:0.2];
+% ax.RTickLabel = [];
+% ax.RTickMode = 'auto'
+set(gcf,'unit','centimeters','Position',[2 2 18.2 8.2]);       %设置图片的大小
+set(gca,'unit','centimeters','position',[2,1,6,6]);             %设置坐标轴相对图片的大小
+
+%3:1建筑
+annotation('rectangle', [0.035,0.794,0.155,0.12] ...
+    ,'LineWidth',1,'Color','k' ...
+    ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.183,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+
+% % 2:1建筑
+% annotation('rectangle', [0.055,0.793,0.11,0.12] ...
+%     ,'LineWidth',1.5,'Color','k' ...
+%     ,'LineStyle','-'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.158,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+%1:1建筑
+% annotation('rectangle', [0.075,0.793,0.065,0.12] ...
+%     ,'LineWidth',1.5,'Color','k' ...
+%     ,'LineStyle','-'...
+%     ,'FaceColor',"#A9A9A9");
+% annotation('ellipse', [0.133,0.78,0.014,0.027] ...
+%     ,'LineWidth',1,'Color','r' ...
+%     ,'FaceColor',"r");
+
+annotation('arrow', [0.11,0.01], [0.85,0.85] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(9.4/6*pi,-0.01,'Y','FontSize',10.5,'FontName','Times New Roman');
+
+annotation('arrow', [0.11,0.11], [0.85,0.965] ...
+    ,'LineWidth',2,'Color','#D95319');
+text(5.4/6*pi,-0.06,'X','FontSize',10.5,'FontName','Times New Roman');
+
+% 中心点
+annotation('ellipse', [0.1,0.84,0.014,0.027] ...
+    ,'LineWidth',1,'Color','r' ...
+    ,'FaceColor',"r");
+% text(0,-0.2,'O','FontSize',10.5,'FontName','Times New Roman');
+
+%图上标记
+annotation('line', [0.11,0.11], [0.65,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'LineStyle','-.');
+annotation('arrow', [0.145,0.11], [0.68,0.79] ...
+,'LineWidth',1.2,'Color','k' ...
+,'HeadStyle','plain' ...
+,'HeadWidth',5);
+
+theta = linspace(0,3/6*pi,20);
+rho = 0*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = linspace(0,3/6*pi,20);
+rho = 0.2*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [0 0];
+rho = [0 0.2];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+theta = [1/2*pi 1/2*pi];
+rho = [0 1];
+polarplot(theta,rho,'linewidth',1,'Color','k');
+
+theta = linspace(0,3/6*pi,20);
+rho = [0.05*ones(1,size(theta,2));
+0.1*ones(1,size(theta,2));
+0.15*ones(1,size(theta,2))];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [1/6*pi 1/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+theta = [2/6*pi 2/6*pi];
+rho = [0 1];
+polarplot(theta,rho,'linestyle','-.','Color',[0.8 0.8 0.8]);
+
+theta = linspace(0,0.7/6*pi,10);
+rho = -0.04*ones(1,size(theta,2));
+polarplot(theta,rho,'linewidth',1.5,'Color','k');
+text(0.25/6*pi,-0.03,'\theta','FontSize',12,'FontName','Times New Roman');
+
+
+t = text(-0.2/6*pi,0.1,'Max(Acc_{X or Y})/Acc_A', ...
+    'FontSize',10.5, ...
+    'FontName','Times New Roman', ...
+    'HorizontalAlignment','center', ...
+    'Rotation',90);
+
+set(gca, 'FontSize',11,'Fontname', 'Times New Roman','LineWidth',1)%设置坐标轴的字号、字体和线宽
